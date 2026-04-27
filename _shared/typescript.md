@@ -63,8 +63,53 @@
 
 ---
 
-## 待補
+## async / await 錯誤處理
 
-- [ ] async / await 錯誤處理慣例
-- [ ] utility type 常用組合
-- [ ] 與 Zod / Valibot 等 runtime 驗證庫的整合
+- **預設用 try/catch**，不要回傳 `[err, data]` tuple 風格
+- 在「邊界」處集中處理錯誤（API service、route handler、頂層 effect），業務邏輯保持線性
+- 不要 `await` 一個 catch 就吞掉錯誤訊息，至少要 log 或往上拋
+  ```ts
+  try {
+    const user = await fetchUser(id);
+    return user;
+  } catch (err) {
+    logger.error('fetchUser failed', { id, err });
+    throw err;
+  }
+  ```
+- 多個獨立 async 操作用 `Promise.all` / `Promise.allSettled`，**不用 for...of 串行 await**
+
+---
+
+## 常用 Utility Type
+
+| 用法 | 說明 |
+|------|------|
+| `Partial<T>` | 全部欄位可選，常用於 PATCH payload |
+| `Required<T>` | 強制全部必填 |
+| `Pick<T, K>` / `Omit<T, K>` | 挑欄位 / 排除欄位，做 DTO |
+| `Readonly<T>` | 不可變物件 |
+| `Record<K, V>` | 鍵值對的型別 |
+| `ReturnType<typeof fn>` | 取函式回傳型別 |
+| `Awaited<T>` | 拆 Promise，取最內層型別 |
+| `NonNullable<T>` | 排除 null / undefined |
+
+不要為了炫技而堆型別，**能單純就單純**。
+
+---
+
+## Runtime 驗證（Zod / Valibot）
+
+- 所有「來自外部的資料」都要經過 runtime 驗證：API response、URL query、localStorage、postMessage
+- 框架選擇：**Zod** 為預設（生態成熟），追求極輕量包大小才考慮 Valibot
+- 從 schema 推導 TS 型別，不另外手寫 interface：
+  ```ts
+  const UserSchema = z.object({
+    id: z.string().uuid(),
+    name: z.string().min(1),
+    email: z.string().email(),
+  });
+  export type User = z.infer<typeof UserSchema>;
+  ```
+- API service 層內 `parse()`，失敗讓 catch 集中處理
+- **不在元件層**做 schema 驗證

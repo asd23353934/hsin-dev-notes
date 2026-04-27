@@ -120,11 +120,70 @@ src/app/
 
 ---
 
+## 表單
+
+- **一律用 Reactive Forms**，不用 Template-driven
+- 用 `FormBuilder` + `inject()` 建立表單
+- 型別安全：用 `nonNullable: true` 或顯式 `FormGroup<{ ... }>`
+  ```typescript
+  private fb = inject(FormBuilder);
+
+  form = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(50)]],
+    email: ['', [Validators.required, Validators.email]],
+  });
+  ```
+- 自訂 validator 寫成獨立函式，放 `shared/validators/`
+- 錯誤訊息對應由 component 統一處理，不在 template 寫一堆 `@if`
+
+---
+
+## 路由
+
+- 路由設定用 standalone `Routes` 陣列，每個 feature 獨立檔（`*.routes.ts`）
+- **lazy load** feature 用 `loadChildren: () => import(...)`
+- 元件級 lazy load 用 `loadComponent`
+- guard / resolver 用 functional 寫法（`CanActivateFn` / `ResolveFn`），**不用** class-based guard
+  ```typescript
+  export const authGuard: CanActivateFn = () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+    return auth.isLoggedIn() || router.createUrlTree(['/login']);
+  };
+  ```
+- 路由參數型別用 `withComponentInputBinding()` + `input()` 接收，元件不直接拉 `ActivatedRoute`
+
+---
+
+## 測試
+
+- 框架：_待定（Karma+Jasmine 沿用 / 改 Jest / Vitest）_
+- 測試檔與被測檔同目錄，`*.spec.ts`
+- component 測試用 `@angular/core/testing` + `ComponentFixture`
+- service 走純 unit test，HTTP 用 `HttpTestingController`，**不打真 API**
+- signal 斷言直接呼叫：`expect(component.count()).toBe(1)`
+- 不追求 100% 覆蓋率，重點放在：
+  1. 商業邏輯（service / pipe / pure function）
+  2. 表單驗證
+  3. 關鍵 user flow（這部分用 e2e，不用單元測試湊）
+
+---
+
+## i18n
+
+- 用 `@angular/localize` build-time 翻譯，**不採用** `ngx-translate`
+- template 字串：`<h1 i18n="@@home.title">首頁</h1>`
+- TS 字串：``$localize`:@@user.greeting:Hello`：``
+- ID 命名 `@@<feature>.<key>`，方便追溯
+- 翻譯檔放 `src/locale/messages.<lang>.xlf`
+
+---
+
 ## 待補項目
 
-以下章節隨開發累積補充：
+隨開發累積補充：
 
-- [ ] 表單慣例（Reactive Form vs Template-driven）
-- [ ] 路由與守衛
-- [ ] 測試慣例
-- [ ] i18n 處理
+- [ ] 自訂 directive 慣例
+- [ ] 自訂 pipe 慣例
+- [ ] 全域錯誤處理 / HTTP interceptor 結構
+- [ ] 環境設定（`environment.ts` vs runtime config）

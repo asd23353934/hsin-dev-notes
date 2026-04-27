@@ -52,8 +52,67 @@
 
 ---
 
-## 待補
+## 動畫
 
-- [ ] 動畫（`@tailwindcss/animate` vs 原生 keyframes）
-- [ ] 表單樣式（`@tailwindcss/forms` 整合方式）
-- [ ] 與 CSS variables 配合的 theming 模式
+- 簡單 transition（hover、focus、enter/leave）→ Tailwind 內建 utility（`transition`、`duration-*`、`ease-*`）
+- 複雜動畫（彈跳、旋轉、複合 keyframe）→ 引入 `tailwindcss-animate` 套件
+- 真的需要客製 keyframe → 寫在 `tailwind.config` 的 `theme.extend.keyframes` + `animation`，不在元件 SCSS 裡硬寫
+  ```js
+  // tailwind.config.js
+  theme: {
+    extend: {
+      keyframes: {
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      animation: {
+        'slide-up': 'slideUp 0.3s ease-out',
+      },
+    },
+  }
+  ```
+- 避免動畫過長（>500ms），會影響感知速度
+
+---
+
+## 表單樣式
+
+- 預設引入 `@tailwindcss/forms`，先取得乾淨的 baseline
+- strategy 用 `'class'`（手動加 `form-input` 才套用），不要 `'base'` 全套，避免影響第三方元件庫的 input
+  ```js
+  // tailwind.config.js
+  plugins: [require('@tailwindcss/forms')({ strategy: 'class' })]
+  ```
+- 第三方元件（PrimeNG、Ant Design）的表單元件不套用 forms 插件，走元件庫主題
+
+---
+
+## CSS Variables Theming
+
+- 多主題 / Dark Mode 進階情境：用 CSS variables 當「中介層」，Tailwind 顏色定義成 `rgb(var(--color-primary) / <alpha-value>)` 形式
+  ```css
+  /* styles.css */
+  :root {
+    --color-primary: 59 130 246;   /* RGB 數字，逗號用空白 */
+    --color-bg: 255 255 255;
+  }
+  .dark {
+    --color-primary: 96 165 250;
+    --color-bg: 17 24 39;
+  }
+  ```
+  ```js
+  // tailwind.config.js
+  theme: {
+    extend: {
+      colors: {
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        bg: 'rgb(var(--color-bg) / <alpha-value>)',
+      },
+    },
+  }
+  ```
+- 好處：切主題不用 rebuild、可支援使用者自訂主題色
+- 簡單兩主題情境就用 `dark:` 前綴即可，**不要過度工程**

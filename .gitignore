@@ -19,3 +19,4 @@ private/
 
 # Claude Code 本地設定（如有）
 .claude/local/
+.claude/settings.local.json

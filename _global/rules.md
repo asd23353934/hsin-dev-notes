@@ -46,7 +46,30 @@
 - 列出可能要更新的檔案（session-log 一定有，errors / conventions / stack 視情況）
 - 若使用者同意，直接編輯檔案，並提示用 `git diff` 檢視
 
-## 7. `stack.md` 屬被動更新
+## 7. 版本驗證（語言 / 框架 / 套件）
+
+**只要對話中出現具體版本號**——不論是要寫進 `stack.md`、產 code 範例、推薦套件、回答「這個版本能不能用 X 功能」、或建議升級降級——都**必須先驗證**，不可憑記憶或訓練資料猜測。
+
+驗證三步驟：
+
+1. **版本存在且可用**
+   - 套件：`npm view <pkg> versions` 或查 npm registry / GitHub Releases
+   - 語言：Node `nodejs.org/dist`、TypeScript GitHub Release、Python `python.org/downloads`
+   - 框架：官方 release notes / GitHub Releases
+   - 確認該版本真實存在、未被 deprecate / unpublish
+2. **寫法與該版本是否相符**
+   - 比對該版本的 API 變動（例：Angular 16 沒有 `@if`、Angular 19 預設 zoneless、React 19 才有 `use()`、Node 22 才預設支援某些 ESM 行為）
+   - 若 `conventions.md` 寫法與該版本不符 → **主動提示** Hsin 決定「更新 conventions」或「改版本」
+3. **套件 / 執行環境相容性**
+   - 套件間：peerDependencies（`primeng` ↔ `@angular/core`、`@angular/cdk` ↔ `@angular/core`、`tailwindcss` ↔ `postcss`、`vite` ↔ `node`）
+   - 套件 ↔ 語言：例如某 Angular 版本要求最低 Node / TS 版本
+   - 有衝突要**在建議前**提出，不要先寫了讓 Hsin 自己踩到
+
+對話中若 Hsin 直接給定版本（例如貼 `package.json`），仍要做第 2、3 步驗證，不能盲信。
+
+---
+
+## 8. `stack.md` 屬被動更新
 
 各框架的 `stack.md`（例如 `angular/stack.md`）**不主動催促補版本**。
 
@@ -54,17 +77,12 @@
   1. Hsin 在某個實際專案內請 Claude 協助開發，任務結束後可順勢提議同步
   2. Hsin 主動提出（例如貼 `package.json` 說「幫我填進去」）
 - 列「還有哪些要補」這類盤點時，可以**提及** `stack.md` 待補，但要標註「等實際專案任務時順手補即可」，不當成獨立待辦
+- 寫入時一律走第 7 條的版本驗證流程
 - 理由：版本資訊只有在實際接觸專案 `package.json` 時才會自然取得，空著不影響當下對話
-
-**寫入版本前必須驗證**（不可憑記憶或猜測）：
-
-1. **版本存在且可用** → 用 `npm view <pkg> versions` 或查 npm registry / GitHub release，確認該版本號真實存在且未被 deprecate
-2. **寫法是否與既有 conventions 衝突或過時** → 比對該版本的 API 變動（例如 Angular 16 沒有 `@if`、Angular 19 預設 zoneless），若 conventions.md 寫法與該版本不符，**主動提示** Hsin 決定要更新 conventions 還是改版本
-3. **套件版本相容性** → 檢查 peerDependencies（`primeng` ↔ `@angular/core`、`@angular/cdk` ↔ `@angular/core`、`tailwindcss` ↔ `postcss` 等），有衝突要在寫入前提出
 
 ---
 
-## 8. 不要做的事
+## 9. 不要做的事
 
 - 不主動重構與當前需求無關的程式碼
 - 不在沒看程式碼前就猜測解法

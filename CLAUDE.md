@@ -73,6 +73,18 @@ dev-notes/
 - 依照 `[framework]/conventions.md` 的決議寫法（例如 Angular 用 signal-based API、standalone components）
 - 不要違反 `_global/rules.md` 的規則
 
+### 版本驗證（語言 / 框架 / 套件）
+
+**只要對話中出現具體版本號**——不論是寫進 `stack.md`、產 code 範例、推薦套件、回答「這個版本能不能用 X」、或建議升降版——都必須先驗證，**不可憑記憶或訓練資料猜測**。
+
+驗證三步驟：
+
+1. **版本存在且可用** → `npm view <pkg> versions` / npm registry / GitHub Releases / 官方 release notes，確認該版本真實存在、未被 deprecate 或 unpublish
+2. **寫法是否與該版本相符** → 比對該版本的 API 變動（例：Angular 16 沒 `@if`、Angular 19 預設 zoneless、React 19 才有 `use()`）。若與 `conventions.md` 不符，**主動提示** Hsin 決定「更新 conventions」或「改版本」
+3. **相容性** → peerDependencies（`primeng` ↔ `@angular/core`、`@angular/cdk` ↔ `@angular/core`、`tailwindcss` ↔ `postcss`）、套件 ↔ 語言（最低 Node / TS 版本）。有衝突要在建議前提出
+
+Hsin 直接給定版本（例如貼 `package.json`）時，仍要做第 2、3 步驗證，不能盲信。
+
 ### Debug 流程
 
 1. **先看錯誤訊息與相關程式碼**
@@ -120,10 +132,7 @@ dev-notes/
   1. Hsin 在某個實際專案內請 Claude 協助開發，**任務結束後**可主動提議：「要不要把這個專案的版本同步到 stack.md？」
   2. Hsin **主動提出**（例如貼 `package.json` 說「幫我填進去」）
 - 不要在對話結束盤點時，把「stack.md 待補版本」列為待辦催促 Hsin
-- **寫入版本前必須驗證**（不可憑記憶或猜測）：
-  1. 版本確實存在且可用 → 用 `npm view <pkg> versions` 或查 npm registry / GitHub release
-  2. 該版本的寫法是否與本 repo 既有 conventions 衝突或已過時（例如 Angular 17 才有 `@if`）→ 不一致時主動提示
-  3. 套件之間版本相容性 → 檢查 peerDependencies（例如 `primeng` vs `@angular/core`、`tailwindcss` vs `postcss`），有衝突時提出
+- 寫入版本一律走「開發協助規則 → 版本驗證」三步流程
 
 ### `conventions.md`（決議型）
 - 只記「我們團隊/我個人」的決議

@@ -1,0 +1,21 @@
+# 系統檔
+.DS_Store
+Thumbs.db
+
+# 編輯器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 暫存
+*.tmp
+*.bak
+~$*
+
+# 個人草稿（不想上傳的內容放這裡）
+drafts/
+private/
+
+# Claude Code 本地設定（如有）
+.claude/local/

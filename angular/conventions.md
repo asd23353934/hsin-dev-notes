@@ -54,11 +54,81 @@
 
 ---
 
-## PrimeNG
+## PrimeNG（v18+ Aura Theming）
 
-- 引入用 standalone：`imports: [ButtonModule]`
-- 自訂主題用 PrimeNG 的 theming API 或 Tailwind config
+> 適用 PrimeNG 18 以上（v21 為當前 stack）。v17 以前的 SASS theme 寫法已棄用。
+
+### 引入
+
+- 元件 standalone import：`imports: [ButtonModule]`
+- 在 `app.config.ts` 用 `providePrimeNG()` 設定全域主題
+- 主題包用 **`@primeng/themes`**（PrimeNG 專用 re-export，與 PrimeNG 同版同步）
+
+```typescript
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { providePrimeNG } from 'primeng/config';
+import Aura from '@primeng/themes/aura';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    providePrimeNG({
+      theme: {
+        preset: Aura,
+        options: {
+          darkModeSelector: '.dark',   // 對齊 Tailwind dark variant
+          cssLayer: {
+            name: 'primeng',
+            order: 'tailwind-base, primeng, tailwind-utilities',
+          },
+        },
+      },
+    }),
+  ],
+};
+```
+
+### Preset 選擇
+
+PrimeNG 內建 4 套：`Aura`（預設、現代）、`Material`、`Lara`、`Nora`。
+- 一般專案用 `Aura`，視設計需求才換
+- 一份專案只用一套，不混搭
+
+### 自訂主題
+
+用 `definePreset()` 改 token，**不要直接覆寫 CSS class**：
+
+```typescript
+import { definePreset } from '@primeuix/themes';
+import Aura from '@primeng/themes/aura';
+
+const MyPreset = definePreset(Aura, {
+  semantic: {
+    primary: {
+      50:  '{indigo.50}',
+      500: '{indigo.500}',
+      900: '{indigo.900}',
+    },
+  },
+});
+
+providePrimeNG({ theme: { preset: MyPreset } });
+```
+
+### 與 Tailwind 共存
+
+- `cssLayer` 設定為 `tailwind-base, primeng, tailwind-utilities`，讓 Tailwind utility 能覆寫 PrimeNG 預設樣式
+- 在 `styles.css`：
+  ```css
+  @import "tailwindcss";
+  @layer tailwind-base, primeng, tailwind-utilities;
+  ```
+- `darkModeSelector` 與 Tailwind dark variant 對齊（同樣用 `.dark`）
+
+### 其他
+
 - Tree 元件相關踩坑見 `errors.md`
+- 自訂元件樣式優先用 Tailwind utility 寫外層，內部 token 透過 preset 改
 
 ---
 
@@ -176,6 +246,80 @@ src/app/
 - TS 字串：``$localize`:@@user.greeting:Hello`：``
 - ID 命名 `@@<feature>.<key>`，方便追溯
 - 翻譯檔放 `src/locale/messages.<lang>.xlf`
+
+---
+
+## ESLint（flat config，必用）
+
+> ESLint 9 起棄用 legacy `.eslintrc.*`，10 強制 flat config。Angular 21 / `angular-eslint` 21 已原生支援。
+
+### 設定檔
+
+- 一律用 `eslint.config.js`（或 `.mjs` / `.ts`），**不再用** `.eslintrc.json` / `.eslintrc.js`
+- 與 `tsconfig.json` 同層，CLI 自動發現
+
+### 基本骨架
+
+```js
+// eslint.config.js
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import angular from 'angular-eslint';
+
+export default tseslint.config(
+  {
+    files: ['**/*.ts'],
+    extends: [
+      eslint.configs.recommended,
+      ...tseslint.configs.recommended,
+      ...tseslint.configs.stylistic,
+      ...angular.configs.tsRecommended,
+    ],
+    processor: angular.processInlineTemplates,
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        { type: 'attribute', prefix: 'app', style: 'camelCase' },
+      ],
+      '@angular-eslint/component-selector': [
+        'error',
+        { type: 'element', prefix: 'app', style: 'kebab-case' },
+      ],
+    },
+  },
+  {
+    files: ['**/*.html'],
+    extends: [
+      ...angular.configs.templateRecommended,
+      ...angular.configs.templateAccessibility,
+    ],
+  },
+);
+```
+
+### 從 `.eslintrc.json` 升級
+
+1. 安裝最新 `angular-eslint` + `typescript-eslint`：
+   ```bash
+   ng add angular-eslint
+   ```
+   `ng add` 會偵測舊設定並提示 migrate（v18+ schematic 直接產 flat config）
+2. 手動 migrate：用 `@eslint/migrate-config` 工具
+   ```bash
+   npx @eslint/migrate-config .eslintrc.json
+   ```
+3. 確認沒有 `extends: ['plugin:...']` 字串式繼承——flat config 改用 `extends: [...arrays]`
+
+### Lint 指令
+
+- `npm run lint` 對應 `ng lint` 即可，CLI 21 內建 flat config
+- CI 可加 `--max-warnings=0` 強制零警告
+
+### 常見地雷
+
+- **不要混用** `.eslintrc.*` 與 `eslint.config.js`，ESLint 看到 flat config 就會忽略 legacy
+- VS Code 的 ESLint 套件需 `>=3.0`，舊版不認 flat config
+- `parserOptions.project` 在 flat config 內改為 `languageOptions.parserOptions.project`
 
 ---
 

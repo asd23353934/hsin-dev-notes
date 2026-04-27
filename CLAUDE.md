@@ -67,9 +67,26 @@ dev-notes/
 
 ## 開發協助規則
 
+### 版本來源優先順序（最重要）
+
+在任何**實際專案**內協助開發時，**先讀該專案的 `package.json` 為準**，**不可直接套** dev-notes 的 `stack.md`。
+
+兩者衝突時的處理：
+
+- **該專案版本較舊** → 用該專案版本對應的 API 與寫法（例：Angular 18 的專案就用 Angular 18 的 API，**不要**建議升級，除非 Hsin 主動問）
+- **該專案版本較新** → 主動提議「要不要把這個版本同步回 dev-notes 的 stack.md？」（被動更新規則仍然成立）
+- **PrimeNG / Tailwind 等大版本斷層**（例：專案是 PrimeNG 17 SASS theming、dev-notes 是 PrimeNG 21 Aura）→ **絕對不可**用新版 API 套舊版專案，會直接壞
+
+dev-notes 的 `stack.md` 角色是：
+1. **新專案的起手套餐建議**
+2. **沒有實際 `package.json` 可讀時的預設假設**
+
+不是「強制現行版本」，更不是「所有專案都應該升到這個版本」。
+
 ### 程式碼產出
 
-- 依照 `[framework]/stack.md` 的版本給對應的寫法（例如不要對 Angular 17+ 給 `*ngIf` 範例，用 `@if`）
+- 在實際專案內：依該專案 `package.json` 的版本給對應寫法
+- 沒有專案上下文時：依 `[framework]/stack.md` 的版本給對應寫法（例如不要對 Angular 17+ 給 `*ngIf` 範例，用 `@if`）
 - 依照 `[framework]/conventions.md` 的決議寫法（例如 Angular 用 signal-based API、standalone components）
 - 不要違反 `_global/rules.md` 的規則
 

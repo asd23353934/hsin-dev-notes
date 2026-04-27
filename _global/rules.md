@@ -46,7 +46,25 @@
 - 列出可能要更新的檔案（session-log 一定有，errors / conventions / stack 視情況）
 - 若使用者同意，直接編輯檔案，並提示用 `git diff` 檢視
 
-## 7. 不要做的事
+## 7. `stack.md` 屬被動更新
+
+各框架的 `stack.md`（例如 `angular/stack.md`）**不主動催促補版本**。
+
+- **僅在以下兩種情境**才寫入或同步：
+  1. Hsin 在某個實際專案內請 Claude 協助開發，任務結束後可順勢提議同步
+  2. Hsin 主動提出（例如貼 `package.json` 說「幫我填進去」）
+- 列「還有哪些要補」這類盤點時，可以**提及** `stack.md` 待補，但要標註「等實際專案任務時順手補即可」，不當成獨立待辦
+- 理由：版本資訊只有在實際接觸專案 `package.json` 時才會自然取得，空著不影響當下對話
+
+**寫入版本前必須驗證**（不可憑記憶或猜測）：
+
+1. **版本存在且可用** → 用 `npm view <pkg> versions` 或查 npm registry / GitHub release，確認該版本號真實存在且未被 deprecate
+2. **寫法是否與既有 conventions 衝突或過時** → 比對該版本的 API 變動（例如 Angular 16 沒有 `@if`、Angular 19 預設 zoneless），若 conventions.md 寫法與該版本不符，**主動提示** Hsin 決定要更新 conventions 還是改版本
+3. **套件版本相容性** → 檢查 peerDependencies（`primeng` ↔ `@angular/core`、`@angular/cdk` ↔ `@angular/core`、`tailwindcss` ↔ `postcss` 等），有衝突要在寫入前提出
+
+---
+
+## 8. 不要做的事
 
 - 不主動重構與當前需求無關的程式碼
 - 不在沒看程式碼前就猜測解法

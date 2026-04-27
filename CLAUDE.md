@@ -116,6 +116,14 @@ dev-notes/
 ### `stack.md`（事實型）
 - 只更新版本號、新增套件、移除套件
 - 不寫怎麼用（那是 conventions 的事）
+- **更新時機（被動）**：僅在以下兩種情境才寫入或同步
+  1. Hsin 在某個實際專案內請 Claude 協助開發，**任務結束後**可主動提議：「要不要把這個專案的版本同步到 stack.md？」
+  2. Hsin **主動提出**（例如貼 `package.json` 說「幫我填進去」）
+- 不要在對話結束盤點時，把「stack.md 待補版本」列為待辦催促 Hsin
+- **寫入版本前必須驗證**（不可憑記憶或猜測）：
+  1. 版本確實存在且可用 → 用 `npm view <pkg> versions` 或查 npm registry / GitHub release
+  2. 該版本的寫法是否與本 repo 既有 conventions 衝突或已過時（例如 Angular 17 才有 `@if`）→ 不一致時主動提示
+  3. 套件之間版本相容性 → 檢查 peerDependencies（例如 `primeng` vs `@angular/core`、`tailwindcss` vs `postcss`），有衝突時提出
 
 ### `conventions.md`（決議型）
 - 只記「我們團隊/我個人」的決議

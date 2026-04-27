@@ -55,13 +55,47 @@ dev-notes/
 
 ### 在其他專案中使用此筆記
 
-選擇一種：
+**核心原則**：dev-notes 的 `stack.md` 是「新專案起手套餐 / 預設假設」，**不是強制現行版本**。實際專案內優先以該專案 `package.json` 為準（詳見 `CLAUDE.md`「版本來源優先順序」）。
 
-**做法 A**：在實際開發專案的 `CLAUDE.md` 加上指向：
+#### 推薦做法：每個專案有自己的 `CLAUDE.md`
+
+在實際開發專案根目錄放 `CLAUDE.md`，引用 dev-notes 同時記錄該專案的特殊限制：
+
 ```markdown
-# 專案 CLAUDE.md
-請同時參考 ~/dev-notes/CLAUDE.md 的全域規則與慣例。
+# <專案名稱> CLAUDE.md
+
+## 參考來源
+
+請同時參考 `~/dev-notes/CLAUDE.md` 的全域規則與慣例（語言、回覆風格、版本驗證、筆記更新流程等）。
+
+## 本專案版本（以 package.json 為準）
+
+- Angular: 18.2.x
+- PrimeNG: 17.18.x（仍用舊 SASS theming，**未升 Aura**）
+- Tailwind: 3.4.x（**v3 寫法**，`tailwind.config.js`）
+- ESLint: 8.x（legacy `.eslintrc.json`，**尚未升 flat config**）
+- Node: 20 LTS
+
+## 與 dev-notes 的差異 / 限制
+
+- **不要**直接套用 dev-notes 的 PrimeNG Aura 寫法 → 此專案仍用 SASS theming
+- **不要**建議升 Tailwind v4 / ESLint flat config / Angular 21（升級需另外排程）
+- 若提到「Angular 18 沒有的 API」（例如 zoneless 預設），先確認再給範例
+
+## 本專案專屬慣例
+
+（寫此專案獨有的決議，不必跟 dev-notes 重複）
+
+- 例：API client 一律走 `core/api/`，不用 dev-notes 寫的 `services/`
+- 例：表單錯誤訊息走自家 `<form-error>` 元件
 ```
+
+> **這個 pattern 解決三件事**：
+> 1. dev-notes 維持單一前沿版本，不需要為每個舊專案開分支
+> 2. 該專案的版本鎖死，Claude 不會誤用新版 API
+> 3. 專案專屬慣例與 dev-notes 公共慣例分離，不互相污染
+
+#### 替代做法（簡單情境）
 
 **做法 B**：用 symlink 把 `_global/rules.md` 連結到專案：
 ```bash
@@ -72,6 +106,8 @@ ln -s ~/dev-notes/_global/rules.md /path/to/project/CLAUDE-RULES.md
 ```markdown
 請優先參考 ~/dev-notes/ 的所有 .md 檔案內容。
 ```
+
+> 做法 B/C 適合**新專案 / 與 dev-notes 版本一致**的情境。舊專案請走推薦做法。
 
 ---
 

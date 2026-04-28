@@ -17,6 +17,29 @@
 
 ---
 
+### 2026-04-28｜key-trace 從零 scaffold 到 walking skeleton + 三輪 review + 新增 electron/ 框架資料夾
+- **專案**：key-trace（新建：WhatPulse 替代品，Electron 桌面 app）+ dev-notes 本身
+- **重點**：
+  - 規格決議走 Q1~Q16 16 題決策樹，逐題確認：Win + macOS、本機 + 匯出、三軸全做、electron-vite 三進程拆分（main / utility / renderer）、uiohook-napi 隱私底線（只記每鍵 × 每 app 次數，無時序，視窗標題預設 OFF）、5s 視窗輪詢、60s idle、分鐘 bucket + 每日 rollup、electron-trpc + TanStack Query、shadcn + Tremor、六項系統整合全做、release pipeline 後做、Spectra 待 walking skeleton 完成才導入、不加密 SQLite、v1 = 番茄鐘 + heatmap + markdown 報告 + Claude 寫總結
+  - **技術 spike** 驗 uiohook-napi（prebuilt 直跑，3+35 events 都抓得到）、get-windows 動態抓 active app — 全綠
+  - **Walking skeleton** 落地：Electron 41 + electron-vite 5 + Vite 7.3.2（vite 8 卡 electron-vite peer）+ React 19 + TS 6.0.3 + Tailwind v4 + electron-trpc + TanStack Query + uiohook-napi + get-windows，用 Playwright `_electron.launch()` 自測截圖
+  - **重大踩坑**：electron-trpc 0.7.1 / 1.0.0-alpha.0 內部仍用 tRPC v10 procedure 結構，跟 v11 不相容（renderer query 永遠 isLoading 但無 error）。降版 tRPC → 10.45.4 + TanStack Query → 4.44.0 解決。已寫 `electron/errors.md`
+  - **Pre-commit 三輪 review**：
+    - `/simplify`：拆 Card props（`unit` / `subtitle` 分開）、tracker 改 factory + `started` flag、stopTracker 去重、加單一實例鎖、router 改 `createRouter(tracker)`
+    - `/security-review`：加 shell scheme allowlist、CSP 拆細（移 script unsafe-inline）、`web-contents-created` → `will-navigate` 全域阻擋、`sandbox: true`（搭配 preload bundle electron-trpc）、抽 `src/main/hooks.ts` 隱私 wrapper（鍵盤對外只給 keycode 不給 keychar；mousemove 對外只給 dx/dy）、`activeTitle` 預設 OFF（`captureTitle: false`）— **隱私底線改為程式結構強制**，不再只是 spec 上的口頭約束
+    - `/review`（peer）：註解精簡、`startedAt` 改在 start() 設、滑鼠 dx/dy 4000px sanity bound、`uIOhook.start` try/catch（macOS 權限拒絕降級為「不追蹤」不打死 app）、`pollActiveWindow` 失敗一次性 console.warn、`will-quit` 雙保險、`engines.node >=22`、`e2e:smoke` script、e2e 改 `waitForFunction` 不寫死等待
+  - **學到**：(1) Electron renderer 自測要走 Playwright `_electron`，不是純瀏覽器（純瀏覽器沒 preload 看不到實際行為）。(2) electron-trpc 與 tRPC v11 整套不相容是 trap，社群 alpha 版也沒升。(3) `sandbox: true` 在用 electron-trpc 時要把套件 bundle 進 preload（不是 externalize）才行。(4) 隱私敏感的 native module 一定要包 wrapper 層做結構強制，靠 PR review 注意是不夠的
+- **產出**：
+  - 新 repo `key-trace`：完整 scaffold（package.json / electron.vite.config.ts / tsconfig × 3 / src/main/{index,tracker,router,hooks}.ts / src/preload/index.ts / src/renderer/* / scripts/e2e-check.mjs / CLAUDE.md / .gitignore / .npmrc / .claude/launch.json）
+  - dev-notes：`electron/stack.md`、`electron/conventions.md`、`electron/errors.md`、`README.md` + `CLAUDE.md` 結構圖補 electron/、commit scope 加 `electron`、本 session-log
+- **後續**：
+  - key-trace 進入 A2：utility process + better-sqlite3（schema 設計 / 每分鐘 bucket / 每日 rollup）
+  - A2 收尾後 init `openspec/`，導入 Spectra
+  - 追蹤 electron-trpc upstream 升 tRPC v11，屆時整套升回 tRPC 11 + TanStack Query 5
+  - v1 release 前補 README、HTTP-layer CSP、native module supply chain overrides
+
+---
+
 ### 2026-04-28｜全 repo 審查 + stack.md 政策統一 + Vitest 收斂
 - **專案**：dev-notes 本身
 - **重點**：

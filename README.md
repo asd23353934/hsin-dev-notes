@@ -43,7 +43,12 @@ dev-notes/
 │   ├── conventions.md
 │   └── errors.md
 │
-└── python/               # Python 專屬（爬蟲 / Worker）
+├── python/               # Python 專屬（爬蟲 / Worker）
+│   ├── stack.md
+│   ├── conventions.md
+│   └── errors.md
+│
+└── electron/             # Electron 桌面應用專屬
     ├── stack.md
     ├── conventions.md
     └── errors.md

@@ -62,7 +62,7 @@ discuss?  →  propose  →  apply  ⇄  ingest  →  archive
 如果專案有設定 pre-commit hook，commit 前依序執行：
 
 1. `/simplify` — 檢查重複邏輯、不必要的複雜度、可重用性
-2. `/spectra:audit` — 安全漏洞掃描（OWASP Top 10、危險預設值、型別混淆、靜默失敗）
+2. `/spectra-audit` — 安全漏洞掃描（OWASP Top 10、危險預設值、型別混淆、靜默失敗）
 3. **同步文件** — 新功能 / 新 API / 新環境變數 → 同步更新 `CLAUDE.md` 與 `README.md`
 
 三步全綠才 commit。發現問題就先修。

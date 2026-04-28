@@ -227,11 +227,15 @@ src/app/
 
 ## 測試
 
-- 框架：_待定（Karma+Jasmine 沿用 / 改 Jest / Vitest）_
+- 框架：**Vitest**（Angular 21+ 統一決議，不再用 Karma+Jasmine 或 Jest）
+- 整合方式擇一：
+  - **`@analogjs/vitest-angular`**（穩定路徑，本 stack 預設）
+  - Angular CLI 21 內建 vitest builder（experimental，新專案可試）
 - 測試檔與被測檔同目錄，`*.spec.ts`
-- component 測試用 `@angular/core/testing` + `ComponentFixture`
+- component 測試用 `@angular/core/testing` + `ComponentFixture`（與測試框架無關）
 - service 走純 unit test，HTTP 用 `HttpTestingController`，**不打真 API**
 - signal 斷言直接呼叫：`expect(component.count()).toBe(1)`
+- Vitest 斷言 API：`expect().toBe()` / `toEqual()` / `toHaveBeenCalledWith()` 與 Jest 對齊，可直接遷移
 - 不追求 100% 覆蓋率，重點放在：
   1. 商業邏輯（service / pipe / pure function）
   2. 表單驗證

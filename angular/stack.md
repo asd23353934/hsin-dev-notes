@@ -2,7 +2,8 @@
 
 > 事實型紀錄：套件版本、執行環境。
 > Claude Code 在產生程式碼前必須先看這份，依版本給對應 API。
-> 最後更新：2026-04-27（最新穩定版基準，依 npm registry 查詢）
+> **角色**：新專案起手套餐 / 預設假設。實際專案內以該專案 `package.json` 為準（見 `CLAUDE.md`「版本來源優先順序」）。
+> 最後更新：2026-04-28（npm registry latest stable）
 
 ---
 
@@ -52,12 +53,12 @@
 |------|------|------|
 | `eslint` | **10.2.1** | flat config 強制（v9 起） |
 | `angular-eslint` | **21.3.1** | 提供 flat config helpers |
-| `typescript-eslint` | **8.59.0** | 提供 flat config helpers |
+| `typescript-eslint` | **8.59.1** | 提供 flat config helpers |
 | `prettier` | **3.8.3** | |
-| `prettier-plugin-tailwindcss` | **0.7.3** | 需 `prettier ^3.0` ✓ |
-| `jest` | **30.3.0** | 單元測試（推薦） |
-| `karma` | **6.4.4** | 沿用 Angular 預設測試棧時 |
-| `jasmine` | **6.2.0** | Karma 搭配 |
+| `prettier-plugin-tailwindcss` | **0.8.0** | 需 `prettier ^3.0` ✓ |
+| `vitest` | **4.1.5** | 單元測試（Angular 21+ 推薦） |
+| `@analogjs/vitest-angular` | **2.4.10** | Vitest ↔ Angular bridge；peer 支援到 Angular 21（`@angular-devkit/architect >=0.1500.0 <0.2200.0`） |
+| `jsdom` | **^25** | Vitest DOM 模擬環境 |
 
 ---
 
@@ -78,10 +79,14 @@
 
 - `@tailwindcss/forms@0.5.11` ✓ tailwind v4
 - `angular-eslint@21.3.1` ✓ eslint 10、`@angular/cli ^21`、`typescript-eslint ^8`
-- `typescript-eslint@8.59.0` ✓ eslint 10、`typescript >=4.8.4 <6.1`
+- `typescript-eslint@8.59.1` ✓ eslint 10、`typescript >=4.8.4 <6.1`
+- `vitest@4.1.5` ✓ vite `^6 || ^7 || ^8`、`@types/node ^20 || ^22 || >=24`
+- `@analogjs/vitest-angular@2.4.10` ✓ vitest `^4`、Angular 17–21（`@angular-devkit/architect >=0.1500.0 <0.2200.0`）
+- `prettier-plugin-tailwindcss@0.8.0` ✓ `prettier ^3.0`
 
 ---
 
 ## 變更歷史
 
+- **2026-04-28** 測試框架由 Karma+Jasmine / Jest 三選一收斂為 **Vitest 4.1.5 + @analogjs/vitest-angular 2.4.10**（Angular 21+ 統一決議）；補齊 typescript-eslint 8.59.0→8.59.1、prettier-plugin-tailwindcss 0.7.3→0.8.0
 - **2026-04-27** 建立檔案並寫入當前最新穩定版（Angular 21.2.10、Node 24.15.0 LTS、TS 6.0.3、PrimeNG 21.1.6、Tailwind 4.2.4、ESLint 10.2.1 flat config 等）；採 Tailwind v4、PrimeNG Aura、ESLint flat config

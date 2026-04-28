@@ -120,17 +120,35 @@ export async function POST(request: Request) {
 
 ---
 
-## Prisma
+## Prisma（v7+）
 
-- 共用 client 走 singleton：`lib/prisma.ts`
+> Prisma 7 起預設改用新 `prisma-client` generator（不再是 `prisma-client-js`），需在 `schema.prisma` 內指定 `output` 路徑，import 也從該路徑取，**不再從 `@prisma/client`**。
+> 既有 Prisma 5 / 6 專案不要直接 bump，先讀官方 upgrade guide。
 
-  ```ts
-  import { PrismaClient } from '@prisma/client';
+### Generator 設定
 
-  const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
-  export const prisma = globalForPrisma.prisma ?? new PrismaClient();
-  if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
-  ```
+```prisma
+// schema.prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+```
+
+generator output 視為 build artifact，加入 `.gitignore`，CI / `postinstall` 跑 `prisma generate` 重建。
+
+### 共用 client（singleton）
+
+```ts
+// lib/prisma.ts
+import { PrismaClient } from '@/generated/prisma';
+
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+```
+
+### Migration / 環境變數
 
 - Migration：`prisma migrate dev`（local）/ `prisma migrate deploy`（CI/CD）
 - `DATABASE_URL`（pooled，runtime）與 `DIRECT_URL`（無 pooler，migration 用）分開

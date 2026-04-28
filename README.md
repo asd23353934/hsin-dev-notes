@@ -30,15 +30,26 @@ dev-notes/
 │
 ├── _shared/              # 跨技術棧共用
 │   ├── typescript.md
-│   └── tailwind.md
+│   ├── tailwind.md
+│   └── spectra.md        # Spec-Driven Development 工具流程
 │
-└── angular/              # Angular 專屬
-    ├── stack.md          # 套件版本
-    ├── conventions.md    # 寫法慣例
-    └── errors.md         # 踩坑紀錄
+├── angular/              # Angular 專屬
+│   ├── stack.md
+│   ├── conventions.md
+│   └── errors.md
+│
+├── nextjs/               # Next.js 專屬（App Router）
+│   ├── stack.md
+│   ├── conventions.md
+│   └── errors.md
+│
+└── python/               # Python 專屬（爬蟲 / Worker）
+    ├── stack.md
+    ├── conventions.md
+    └── errors.md
 ```
 
-未來會新增 `react/`、`vue/` 等資料夾。
+未來可能新增 `react/`、`vue/` 等資料夾。
 
 ---
 

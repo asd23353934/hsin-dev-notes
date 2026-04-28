@@ -17,6 +17,30 @@
 
 ---
 
+### 2026-04-28｜key-trace 番茄鐘撤回：Spectra REMOVED 流程 + 「行為依賴功能要先確認」教訓
+- **專案**：key-trace
+- **重點**：
+  - **撤回 add-pomodoro-timer**：番茄鐘做完才聊到，Hsin 說「我應該不會使用他」。功能對個人零價值 → 直接撤。對齊 CLAUDE.md「不過度抽象、不為假想需求設計」
+  - **Spectra REMOVED 流程跑通**（首次跑刪除 capability）：開新 change `remove-pomodoro-timer` → proposal 用 Refactor type、Motivation 寫清「行為依賴 + 個人不用 = 撤」+ Alternatives 比較三條（保留 backend / 純 git delete / 走 Spectra）→ 跳過 design.md（純機械刪除無新架構）→ specs 用 `## REMOVED Requirements` + 每個 requirement 寫 Reason + Migration → tasks 列 7 group 13 task → analyze 出 9 個「no scenarios」Warning（REMOVED 本就無 scenario，是 analyzer 機械化、非實質問題，繼續）→ validate ✓ → apply 刪 3 檔改 6 檔 + uninstall zod → archive
+  - **Archive 後 spec dir 變空殼**：`openspec/specs/pomodoro/spec.md` 只剩 `# pomodoro Specification / ## Purpose: TBD / ## Requirements:` 三行頭。手動 `rm -rf openspec/specs/pomodoro` 整目錄刪掉，反映 capability 已不存在；history 仍在 `openspec/changes/archive/2026-04-28-remove-pomodoro-timer/` 完整保留 reason + migration
+  - **意外驗證 storage pipeline**：執行 e2e 時，「今日總計（DB）」section 顯示鍵盤 20、滑鼠點擊 5、移動 1960 次、12966 px — 是過去跑 dev 時 main → utility → SQLite pipeline 真的有累積（之前每次 e2e 都顯示 0 是因為臨時 instance 剛初始化）。pomodoro 撤掉沒打壞任何事件追蹤
+  - **新存了一個 feedback memory**：「行為依賴功能要先確認 Hsin 個人會不會用」。番茄鐘 / 排程 / 提醒 / 養成 / 遊戲化等「需主動互動才有價值」的功能，排 v1 前直接問「你會不會做這件事」，不要因為「工程量小」「練流程方便」「Q3 選 D 全要」就硬塞
+  - **學到**：
+    - Spectra REMOVED 流程設計給「功能撤回」這種情境很有用。把「為什麼撤」（reason）+ 「如何過渡」（migration）寫進 spec history，未來不會再有人提案要重做同樣的東西
+    - 「Q3=D 全要」是高層願景方向，不等於每個具體功能都該做。具體功能仍要逐個對齊使用者實際行為
+    - 撤回功能 commit 的 +154 / -1084 數字反映「能砍多少就砍多少」的紀律。SDD + git history 能完整講清楚為何砍
+    - 開發練習價值 ≠ 使用者價值。把「練 Spectra 流程」當理由排功能進 v1 是錯的（雖然事後流程確實學起來了）
+- **產出**：
+  - key-trace：`5deff01`（refactor: 撤番茄鐘，16 檔 +154 -1084）
+  - dev-notes：本 session-log
+- **後續**：
+  - **v1 重新定義為 heatmap + markdown 報告 + Claude 寫總結三項**（皆被動 / 自動發生型，貼合 Hsin 工作習慣）
+  - 下個 change 候選：`add-system-integration`（tray + 開機自啟 + 背景模式 + 全域熱鍵，CLAUDE.md「系統整合六項」剩下四項一併做）；或直接做 v1 三功能其中之一
+  - 軸 3「任務 / 專案 tagging」原本搭番茄鐘整合，現在等 v2 才決定要不要做
+  - schema migration 系統長期待辦持續累積，CLAUDE.md L183 已標
+
+---
+
 ### 2026-04-28｜key-trace 番茄鐘落地：Spectra apply + 第一個 archive
 - **專案**：key-trace
 - **重點**：

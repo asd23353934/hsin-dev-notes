@@ -129,6 +129,26 @@ main: {
 
 **理由**：Electron utility process 與 main 同個進程模型（差別只在 `BrowserWindow` 持有），共享 `externalizeDepsPlugin` 設定最直白。tsconfig.node.json 的 `include` 也要加 `src/utility/**` + `src/shared/**`。
 
+## 設定 / 偏好持久化
+
+**規則**：先評估**自寫 fs + JSON 小工具**（30~50 行），不要無腦引 `electron-store`。
+**範例**（key-trace `src/main/settings-store.ts`）：
+```ts
+export function createSettingsStore<T extends object>(
+  fileName: string, defaultValue: T, validate: (raw: unknown) => T,
+): SettingsStore<T> {
+  const path = join(app.getPath('userData'), fileName);
+  let cache: T = readFromDisk();
+  return { get: () => cache, set: (v) => { cache = v; writeFileSync(path, JSON.stringify(v, null, 2), 'utf-8'); } };
+}
+```
+**理由**：electron-store v9+ 全是 ESM-only 模組（`"type": "module"`），與 Electron main 進程的 CommonJS + electron-vite 的 `externalizeDepsPlugin` 衝突，require 時會 throw `ERR_REQUIRE_ESM`。三個替代選項權衡：
+- 自寫（30~50 行 fs+JSON + 型別驗證 + 記憶體 cache）→ **預設選這個**
+- main 改 ESM（牽動 build pipeline、改動大、超過單 feature change 範圍）
+- 退到 `electron-store@8` 或更舊（CJS 但放棄 upstream 修補）
+
+只有當需要 watch / change events / migration 等進階功能才考慮 electron-store，並承擔 ESM 配套（main 改 ESM 或用 dynamic import）。
+
 ## better-sqlite3 慣例
 
 **規則**：

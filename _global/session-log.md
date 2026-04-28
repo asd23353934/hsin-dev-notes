@@ -17,6 +17,31 @@
 
 ---
 
+### 2026-04-28｜key-trace 番茄鐘落地：Spectra apply + 第一個 archive
+- **專案**：key-trace
+- **重點**：
+  - **Spectra apply 完整流程跑通**：`unpark add-pomodoro-timer` → `in-progress add` → 讀 design.md / specs / tasks.md → 18 個 task 逐個實作（用 batch 寫法把同檔多個 task 一次處理）→ `spectra task done <id>` 個別標記 → `validate` ✓ → 三輪 review（simplify / security / peer）→ commit → `spectra archive` 落 base spec → commit
+  - **實作偏離 spec 處理**：原本 spec 寫「設定走 electron-store」，實作時發現 electron-store v9+ 全是 ESM-only，與 main 進程 CommonJS + externalizeDepsPlugin 衝突（require ESM 套件 throw `ERR_REQUIRE_ESM`）。決定自寫 `src/main/settings-store.ts`（fs+JSON + 型別驗證 + memory cache，~40 行），把 spec / design / proposal / tasks 四份 artifact 都更新成「persistent settings store」一般描述 + 在 design.md 補一段「為何不用 electron-store」WHY 紀錄
+  - **三輪 review 抓到的實質改善**（都修了）：
+    - **simplify**：`pausedAccumulatedMs` + `elapsedActiveMs` 在 pomodoro state 裡是冗餘（`endTsMs += pausedDuration` 已涵蓋暫停時長）→ 簡化成 `actualSec = plannedSec - remainingSec()` 統一公式覆蓋運行 / 暫停 / 自然結束三情境；settings-store 每次 fs.readFileSync → 改記憶體 cache；PomodoroCard 五個 `?: null` ternary → `&&`，刪 dead code
+    - **security**：clean，無 confidence ≥ 8 漏洞（綁定參數、無路徑穿越、validate function 雖比 zod 鬆但設定來源在 userData 同信任邊界）。順手把 validate 函式對齊 zod 加 `Number.isInteger` + 上限
+    - **peer**：getStats 5s 全狀態輪詢浪費 → 改成 30s 加 user 觸發 mutation invalidate；PomodoroCard buttons 加 `disabled={mutation.isLoading}` 防雙擊靜默吞錯；spec 對齊驗證（streak 算法 / pause-resume 數學 / stop completed=0 等）全 ✓
+  - **`spectra archive` 行為觀察**：把 change 的 spec 落地進 `openspec/specs/<capability>/spec.md`（成為 project 永久 base spec），原本 `openspec/changes/add-pomodoro-timer/` 整個搬到 `openspec/changes/archive/2026-04-28-add-pomodoro-timer/`，附 snapshot 給 unarchive 用。17/18 task done 也能 archive（task 8.4 實機驗留給 Hsin 跑 dev，不卡 archive）
+  - **學到**：
+    - Spectra propose-apply-archive 拆三段恰當：propose 把架構決議鎖死、apply 不偏離、archive 把成果寫進長期 spec。中間實作若偏離（如 electron-store ESM 卡住），**先更新 artifact 再實作**，spec 一直是 source of truth
+    - 自寫 ~40 行 fs+JSON 工具有時比引第三方套件穩（避開 ESM/CJS / lockstep / breaking change 風險），CLAUDE.md「不過度抽象、不為假想需求設計」對齊
+    - tRPC v10 + zod v3 的 `.input(z.object(...).strict())` 寫法簡潔，搭 `wrapPomodoroAction` 把 throw 統一轉 TRPCError 是好 pattern，未來其他 namespace 可複用
+    - Electron Notification API 一行 `new Notification({ title, body }).show()` 就好，click 事件用 `notification.on('click', ...)`，整合 main 的 focusMainWindow 一氣呵成
+- **產出**：
+  - key-trace：`0f5d554`（feat: 番茄鐘實作 16 檔 +1179）+ `f48d9f2`（chore: archive，6 檔 +361），含新檔 `src/main/{pomodoro,settings-store}.ts` / `src/renderer/src/components/PomodoroCard.tsx` + base spec `openspec/specs/pomodoro/spec.md`
+  - dev-notes：本 session-log
+- **後續**：
+  - **Hsin 跑實機驗（task 8.4）**：`npm run dev` → 縮短 work / break 時長到 6s/3s（updateSettings mutation 或先手改 userData/pomodoro-settings.json）→ 按開始 → 看通知觸發 → click 通知聚焦 → DB 落盤確認 → getStats 顯示 todayCompleted=1
+  - 下一個 v1 change：heatmap + 一日週期分析（建議走 `propose` → `apply` → `archive` 同樣流程）
+  - electron-store 偏離經驗已寫進 design.md，建議反向萃取進 dev-notes/electron/conventions.md 的「Settings 持久化選項」一節（下次更新時順手）
+
+---
+
 ### 2026-04-28｜key-trace 進入功能堆疊：Spectra init + 第一個 change 提案（番茄鐘）
 - **專案**：key-trace
 - **重點**：

@@ -17,6 +17,33 @@
 
 ---
 
+### 2026-04-28｜key-trace A2：utility process + better-sqlite3 storage pipeline
+- **專案**：key-trace
+- **重點**：
+  - **A2 落地**：main 透過 `utilityProcess.fork()` 起 utility 進程，內跑 better-sqlite3。schema 為 `events(minute_ts, app_name)` 主鍵 + `idx_events_minute` 索引；upsert 走 `INSERT ... ON CONFLICT DO UPDATE SET keydown = keydown + excluded.keydown ...` 累加模式 + transaction
+  - **tracker 重構**：原本 in-memory 累計器改成 per-app delta `Map<appName, AppDelta>`，每分鐘 flush 到 utility；事件被 attribute 到當下 `activeApp`，null（黑名單或未 poll）整顆丟棄不入 DB（隱私保險 + 一致性）
+  - **main↔utility 自寫 RPC**：`requestId` (`crypto.randomUUID()`) + `Map<id, resolver>` + 5 秒 timeout；抽 `src/shared/storage-protocol.ts` 共用 message types
+  - **tRPC namespace 重整**：`tracker.stats` (live in-memory) + `historical.totalToday` (DB SUM)；renderer 加「今日總計（DB）」section 4 卡 5 秒 refetch 證實 end-to-end
+  - **意外順利**：better-sqlite3 12.9 的 prebuilt 在 Electron 41 (Node 22 ABI) **直接載入成功**，不必跑 electron-rebuild、不必裝 VS Build Tools。已寫進 `electron/stack.md`
+  - **三輪 review** 走完整 pre-commit 流程：
+    - `/simplify`：抓到 stats 雙寫漂移風險（pendingDeltas + 直接 stats++ 兩條獨立累計線，漏寫一邊就靜默不一致）→ 改成單一來源（live = `sessionTotals` + `pendingDeltas` 即時 sum）；mousemove 雙 Map.get/set → 抽 `getOrCreateDelta()`；utility AppDelta 與 shared 重複定義 → import；App.tsx 兩 grid section → `<Section items={...} />`
+    - `/security-review`：clean，無 confidence ≥ 8 漏洞（綁定參數擋 SQL、V8 structured clone strip prototype、RPC ID 不可猜測、env path 受控）
+    - `/review`：utility 進程崩潰後 main 永久半死路徑（pending RPC 等 5s timeout、`flushBucket` 對死 child throw、`stop().kill()` no-op）→ post-ready `child.on('exit')` 維護 alive flag、drain pending、API 進入 dead 後 fire-and-forget 靜默 / query 立即 reject；`for...in` over `Record` 違反 `noUncheckedIndexedAccess` → `Object.entries`；`as TotalsRow` 假型別無 runtime 檢查 → 抽 `readTodayTotals()` 顯式 `Number(row[k] ?? 0)` normalize；命名收斂 `TotalsRow → TodayTotals` / `flushedTotals → sessionTotals` / `writeBucket → applyBucket`
+  - **學到**：
+    - utility process 不是 main / preload / renderer 之外的「特殊」進程 — 就是個有 message channel 的子 process，better-sqlite3 在裡面跟在 Node CLI 跑沒兩樣
+    - 自寫 RPC over `parentPort` 比想像的簡單（< 100 行），但 **crash 恢復路徑是必做不是 optional**，沒寫整個系統會在 utility 一掛掉就半死
+    - tRPC 的 namespace router 在 `t.router({ a: t.router({...}), b: t.router({...}) })` 巢狀寫法簡單，renderer 自動就能 `trpc.a.x.useQuery()`
+    - 「stats 漂移風險」是雙寫累計器的經典 bug，要靠程式結構消除（單一來源），review 才抓得到
+- **產出**：
+  - key-trace：`src/utility/index.ts`、`src/main/storage.ts`、`src/shared/storage-protocol.ts`（新）；`src/main/{index,router,tracker}.ts` + `src/renderer/src/App.tsx` + `electron.vite.config.ts` + `tsconfig.node.json` + `package.json`（改）；2 commits（`70eee93` A2 落地、`205ad6c` 三輪 review fixup）已 push origin
+  - dev-notes：`electron/stack.md`（補 better-sqlite3 / @types / @electron/rebuild + Electron 載入備忘）、`electron/conventions.md`（新增「utility process IPC + RPC」「utility entry build 結構」「better-sqlite3 慣例」三節）、本 session-log
+- **後續**：
+  - **進入「功能堆疊」階段** → init `openspec/`、導入 Spectra（CLAUDE.md 第 99 行的時機到了）
+  - 第一個 change 候選：`propose-storage-schema`（把 A2 已落地的 schema 寫成 base spec）或直接從 v1 功能（番茄鐘 / heatmap / markdown 報告）開第一個 change
+  - utility entry 仍是純 side-effect script、無法 unit test → 第一次寫測試時拆 `createUtilityHandler({ db, port })` + thin bootstrap
+
+---
+
 ### 2026-04-28｜key-trace 從零 scaffold 到 walking skeleton + 三輪 review + 新增 electron/ 框架資料夾
 - **專案**：key-trace（新建：WhatPulse 替代品，Electron 桌面 app）+ dev-notes 本身
 - **重點**：

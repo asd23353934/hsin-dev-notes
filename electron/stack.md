@@ -45,7 +45,11 @@
 
 ## 資料庫
 
-- **better-sqlite3**：12.9.0（同步 API、極快；Electron 需走 prebuilt 或 electron-rebuild）
+- **better-sqlite3**：12.9.0（同步 API、極快）
+- **@types/better-sqlite3**：7.6.13（套件本身不附型別，要單獨裝）
+- **@electron/rebuild**：4.0.4（devDep；備用，下方說明）
+
+**Electron 載入備忘**：better-sqlite3 12.9 的 prebuilt 在 Electron 41（Node 22 ABI）+ Win 直接載入成功，**不必跑 `electron-rebuild`、不必裝 VS Build Tools**。這跟舊文件 / 舊版本的「Electron 一定要 rebuild」不符，但實測新版 prebuilds 已涵蓋。新專案先試「裝完直接跑」，失敗再走 `npx electron-rebuild -f -w better-sqlite3`（需 VS Build Tools）。
 
 ## 測試
 

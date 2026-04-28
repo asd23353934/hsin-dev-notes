@@ -25,6 +25,7 @@ dev-notes/
 │
 ├── _global/              # 全域規則（任何對話都適用）
 │   ├── rules.md          # 給 Claude 的長期指令
+│   ├── skill.md          # Claude Code 工具/skill/subagent 使用規範
 │   └── session-log.md    # 對話日誌
 │
 ├── _shared/              # 跨技術棧共用

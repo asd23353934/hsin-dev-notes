@@ -22,6 +22,7 @@ dev-notes/
 │
 ├── _global/                    ← 全域規則
 │   ├── rules.md                ← 給 Claude 的長期指令（最高優先）
+│   ├── skill.md                ← Claude Code 工具/skill/subagent 使用規範
 │   └── session-log.md          ← 對話日誌
 │
 ├── _shared/                    ← 跨技術棧共用
@@ -38,7 +39,7 @@ dev-notes/
 
 ## 對話開始時
 
-必讀 `_global/rules.md`。其餘依當下主題按需讀取：Angular → `angular/conventions.md` + `stack.md`；TypeScript → `_shared/typescript.md`；Tailwind → `_shared/tailwind.md`；遇錯先查 `[framework]/errors.md`。不需每次全讀。
+必讀 `_global/rules.md`。其餘依當下主題按需讀取：Angular → `angular/conventions.md` + `stack.md`；TypeScript → `_shared/typescript.md`；Tailwind → `_shared/tailwind.md`；遇錯先查 `[framework]/errors.md`；涉及 Claude Code 工具/skill/subagent/slash command 行為 → `_global/skill.md`。不需每次全讀。
 
 ---
 

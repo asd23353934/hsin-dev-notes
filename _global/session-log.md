@@ -17,6 +17,33 @@
 
 ---
 
+### 2026-04-28｜key-trace 進入功能堆疊：Spectra init + 第一個 change 提案（番茄鐘）
+- **專案**：key-trace
+- **重點**：
+  - **Spectra（spec-driven）正式 init**：A2 完成、walking skeleton 穩定、進入「功能堆疊」階段，按 CLAUDE.md 第 144 行約定 init `openspec/`。CLI `spectra 2.2.5` 已裝（Windows）；Hsin 透過該 CLI 在 key-trace 跑了 init，產出 `openspec/{specs,changes}/`、`openspec/config.yaml`、`.spectra.yaml`、`.claude/skills/spectra-*`、`.claude/settings.json`，並在 `.gitignore` 加 `.spectra/` + `openspec/.vector-search.db*`。CLAUDE.md 頂部被 Spectra 自動注入 `SPECTRA:START` block（指令給 Claude）
+  - **重要習慣**：Spectra skills 是這次 session 啟動後才裝的，當前 conversation 無法直接 `Skill('spectra-propose')` 呼叫（不在啟動時的可用 skill 清單）。**手動讀 SKILL.md 跑 CLI 指令完成同樣流程**（`spectra new change` → `spectra instructions <artifact>` → 寫 artifact → `spectra new artifact` → `spectra analyze` → `spectra validate` → `spectra park`）
+  - **第一個 change `add-pomodoro-timer`** 完整跑完 propose 流程：
+    - **proposal.md**：feature type、新 capability `pomodoro`、影響檔案清單（new / modified）、schema 變動（pomodoro_sessions 七欄）、明標「不影響隱私底線」與「三進程邊界」
+    - **design.md**：8 個關鍵決議（main 持有狀態而非 utility / renderer、三 phase + paused flag、`setTimeout` + 結束絕對時間戳避免時鐘漂移、completed=0 vs 1 落盤策略、streak 用 SQLite localtime + JS 迴圈算、Electron Notification 整合、`electron-store` 設定持久化、schema CREATE IF NOT EXISTS）；Risks/Trade-offs 寫進「app 中斷 session 不恢復」「跨時區搬遷」「沒有 schema migration」等接受項
+    - **specs/pomodoro/spec.md**：9 個 requirement（Timer State Machine / Pause and Resume / Background Continuity / Session Persistence / Streak Calculation / tRPC API Surface / Settings / Notification Behavior / Privacy Invariant），每個含多個 WHEN/THEN scenario + streak 表格 example。**spec 一律英文**（Spectra 規定，因 SHALL/MUST normative wording）
+    - **tasks.md**：8 個 group / 17 個 task，按 dependency 排序：utility schema → 共用 protocol → main storage 橋 → main pomodoro 模組 → router → main 啟動接線 → renderer UI → 驗證（typecheck / build / e2e）
+    - 第一輪 `spectra analyze` 抓到 3 個 Coverage/Consistency Warning：tasks 沒涵蓋 spec 的 `tRPC API Surface` requirement 名 + design 的兩個中文 heading。修法：**精確字面**塞進 task 描述（不靠近似），第二輪全 Clean
+    - `spectra validate` ✓，`spectra park` ✓
+  - **學到**：
+    - Spectra 的 propose workflow 規定 spec 必為英文、其他 artifact 跟 locale（這裡 tw）。spec 用 SHALL/MUST + WHEN/THEN，禁 should/may/might/TBD/TODO
+    - Coverage analyzer 用「字串 substring + case-insensitive」匹配，但**對 Chinese 中標點符號似乎敏感**（`狀態機：idle / work / break + paused 標記` 必須完整出現包括 `：`與 `/`）
+    - `spectra park` 把 change artifacts 移到 `.git/spectra-app/changes/<name>/`，**不入 git 版控**；apply 時自動 unpark 回 `openspec/changes/`。多人協作要分享 parked change 需另想辦法（目前 .spectra.yaml 的 `worktree: true` 是另一條路但沒啟用）
+    - openspec/config.yaml 的 `context:` 一定要填，artifact 生成時 AI 才能對齊既有架構決議；rules: 可分 proposal / tasks / spec 細分規則
+- **產出**：
+  - key-trace：commit `dd40f1d`（chore: 導入 Spectra SDD），檔案有 `openspec/{config.yaml,specs,changes}`、`.spectra.yaml`、`.claude/{settings.json,skills/spectra-*}`、`.gitignore` 與 `CLAUDE.md` 改動。**第一個 change 的 4 個 artifact 都在 `.git/spectra-app/changes/add-pomodoro-timer/`**（parked）
+  - dev-notes：本 session-log
+- **後續**：
+  - **下一步：實作 add-pomodoro-timer**。當 Spectra skills 在新 session 載入完整可用時走 `/spectra-apply add-pomodoro-timer`（會自動 unpark）；不然讀 `.git/spectra-app/changes/add-pomodoro-timer/tasks.md` 手動逐項做、`spectra apply tick <task-num>` 標記完成
+  - 實作完跑既有三輪 review（`/simplify` + 安全 + peer），通過後 `spectra archive add-pomodoro-timer` 把 spec 合進 `openspec/specs/pomodoro/`
+  - 後面 v1 三項（heatmap / markdown 報告 / Claude 寫總結）走同樣 propose → apply → archive 流程
+
+---
+
 ### 2026-04-28｜key-trace A2：utility process + better-sqlite3 storage pipeline
 - **專案**：key-trace
 - **重點**：

@@ -17,6 +17,38 @@
 
 ---
 
+### 2026-04-29｜key-trace heatmap 落地 + PR 流程廢除 + git staging 漏檔教訓
+- **專案**：key-trace
+- **重點**：
+  - **`add-heatmap` 落地**：53 週日歷 heatmap + 24 小時 bar chart。Spectra propose → apply → 三輪 review → archive 一輪過。utility 加兩個 SQL 聚合 query（`date(...,'localtime')` GROUP BY day / `strftime('%H')` GROUP BY hour），活動單位寫死 `keydown + mousedown`（**排除 mousemove** 避免移動量碾壓 keyboard 訊號）；renderer 用純 Tailwind 53×7 grid（零外部依賴）+ Recharts 24 bars
+  - **PR 流程廢除**：上輪試了 system-integration + heatmap 兩個 PR，多花的 branch / push / `gh pr create` / merge / pull 對單人 trunk-based 開發無實質效益。Hsin 明確說「PR 不用建了」。**從現在起 commit 直接進 master，pre-commit 三輪 review 仍跑**（review 是有實質價值的，每次都抓實質 bug）。已存 memory `feedback_no_pr_just_commit.md`
+  - **重大踩坑：git staging 漏檔，PR 合進 master 才發現**
+    - heatmap commit 時 `git add openspec/changes/add-heatmap/ package.json package-lock.json scripts/e2e-check.mjs src/main/ src/renderer/src/ src/shared/` — **漏了 `src/utility/`**！main / router / shared / renderer 都更新，但 utility 進程還是舊版（沒 heatmap statements / handlers）
+    - 本機 typecheck / build / e2e 全綠，因為 build 讀 working tree 最新 src/，跟 git index 無關。working tree 一直有完整 heatmap 程式碼，只是沒被 commit
+    - PR #2 merge 進 master 後才從 archive commit 的 `git status` 看到 `M src/utility/index.ts` 餘留 — 那是 working tree 的「應該已 commit 但實際沒」
+    - **修法**：master 上加一個 `fix(utility):` commit 補上漏掉的 64 行
+    - **教訓**：「specific files by name」雖然安全（避免誤 add 敏感檔），但會踩這種漏檔。對策：commit 前 `git status --short | grep "^[AM?]"` 跑一次對照「我要 commit 什麼」清單；或大膽用 `git add -A` 但配合 `.gitignore` 嚴格把關
+  - **三輪 review 抓到的實質改善**（都修了）：
+    - `/simplify`：storage.ts 三段重複 settle 分支（queryTotalTodayResult / queryHeatmapDailyResult / queryHourlyDistributionResult）→ 收成「非 ready 與 error → settle」單一條件
+    - `/security-review`：clean，無 confidence ≥ 8 漏洞（綁定參數、zod strict、無 XSS 面）
+    - `/review`（peer）：`bucketize` 用 linear `count/max*4` 不對齊 spec L60「quantile-derived thresholds」→ 改用 p25/p50/p75 切；single outlier 不再把其他 cell 全壓進 level 1。`HEATMAP_REFETCH_MS` 與 hourly 共用語意誤導 → rename `HISTORICAL_REFETCH_MS`。fresh install 全灰 heatmap 無提示 → 加「尚無資料」empty state
+- **學到**：
+  - **PR 流程不是 free**：對單人 trunk-based 沒收益就純儀式。多 contributor / 啟用 branch protection 才該回頭走
+  - **三輪 review 仍每次都抓到實質 bug**：尤其 peer review 最常 catch spec 偏離（這次抓到 quantile vs linear、refetch interval 命名）。**review 不可省，PR 可省**
+  - **`git add <dir>` 列舉模式有漏檔風險**：commit 前對 git status 做「對照表」是必要 step
+  - Recharts 首引入 + bundle 700KB → 1.5MB：用了就用了，CLAUDE.md L185 已標 watch render churn / Stats payload 為 future task
+  - 純 Tailwind 53×7 grid 寫熱力圖只要 ~60 行；引 `react-calendar-heatmap` overkill
+- **產出**：
+  - key-trace：`f8d16e5` heatmap 主 commit + `e8b66ed` PR #2 merge + `64686d4` archive + `4502fae` 補漏 utility fix（共 4 commit on master）
+  - memory：`feedback_no_pr_just_commit.md`
+  - dev-notes：本 session-log
+- **後續**：
+  - **Hsin 跑實機驗**：`npm run dev` → heatmap section 今日 cell 有色 / hover 顯示 native title `2026-04-29：1234 次` / 24 hour bars hover tooltip / 4 級色階能視覺辨識
+  - 下個 v1：每日 / 每週 markdown 報告 → Claude API 寫每日總結（前後接續，後者吃前者輸出）
+  - 之後所有 commit 不再開 PR，pre-commit reviews 流程不變
+
+---
+
 ### 2026-04-29｜key-trace 系統整合落地 + 首個 PR 流程 + GitHub Contributors Claude 清除
 - **專案**：key-trace
 - **重點**：

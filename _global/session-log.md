@@ -17,6 +17,38 @@
 
 ---
 
+### 2026-04-29｜key-trace 系統整合落地 + 首個 PR 流程 + GitHub Contributors Claude 清除
+- **專案**：key-trace
+- **重點**：
+  - **`add-system-integration` 落地**：CLAUDE.md「系統整合六項全做」剩餘四項（tray、開機自啟、背景模式關視窗→縮 tray、全域熱鍵 Ctrl+Shift+K）一次到位。Spectra propose → apply → 三輪 review → archive 完整一輪
+  - **第一次走 PR 流程**（之前都直推 master）：feature branch `feat/add-system-integration` → push → `gh pr create` → 自我 merge（單人 trunk-based）→ 切回 master → archive。Spectra 的 archive 是在 PR merge 後跑，spec 才會落地進 `openspec/specs/`
+  - **重要踩坑：requestSingleInstanceLock + Playwright e2e 反覆 launch/kill 後 Windows mutex stale**
+    - 反覆執行 e2e 後，OS 端 single-instance mutex 沒有及時釋放（即使所有 electron.exe 都 force kill）。下一次 e2e 起 Electron 時 `requestSingleInstanceLock()` 回 false → app.quit() → Playwright 看到「Target page has been closed」exit code=0
+    - **解法**：加 `--bypass-single-instance` CLI escape hatch（`process.argv.includes(...)` 檢查）。e2e-check.mjs 的 `_electron.launch({ args: [..., '--bypass-single-instance'] })` 帶這個 flag。production 永遠不傳 → 行為不變
+    - 此 pattern 通用：將來任何「test-only 需要繞過某個 production 行為」的場景，CLI flag 比 env var 乾淨（更明確，不污染環境）
+  - **三輪 review 抓到的實質改善**（都修了）：
+    - `/simplify`：tray menu click 閉包 stale（`stored` 在 buildContextMenu 時 capture，user 切到別的 app 後再回來 click 時可能過時）→ click 內即時 `deps.settingsStore.get()` 而非用 captured 變數；`before-quit` + `will-quit` 重複 cleanup → 加 `cleanedUp` boolean guard
+    - `/security-review`：clean，無 confidence ≥ 8 漏洞
+    - `/review`（peer）：發現兩個明顯 bug — `wasLaunchedAtStartup` macOS 檢測用錯欄位（`wasOpenedAtLogin` → 改 `wasOpenedAsHidden`，前者在「開機自啟但不要隱藏」時也是 true 會誤判）；`tray.on('right-click')` 在 macOS 不會觸發，必須用 `setContextMenu` cross-platform。**peer review 抓到 simplify 與 security 都沒看出來的真實 bug，三輪 review 都不可省**
+  - **GitHub Contributors 把 Claude 清掉**：Hsin 注意到 Contributors 列出 Claude（`Co-Authored-By: Claude ... <noreply@anthropic.com>` trailer 觸發 GitHub 把該 email 算共同作者）。處理：(1) memory 存「未來不加 trailer」、(2) `git filter-repo --message-callback` 把所有歷史 commit 的 trailer 行掃光、(3) `--force-with-lease` push 兩個 repo（key-trace + hsin-dev-notes）。GitHub UI 有 cache 但 API（`gh api repos/.../contributors`）已即時 clean
+- **學到**：
+  - **「我會不會用」教訓延伸**：CLAUDE.md「不為假想需求設計」適用於 **PR 流程也是**。本次第一次走 feature branch + PR review，跟以前直推 master 比，雖然多 5 分鐘但有實質好處：(a) merge commit 標記功能落地點清楚、(b) PR body 把整個 propose / apply / review 過程留證、(c) 強制與 archive 分兩個 commit。後續所有 v1 feature 都應走這個 flow
+  - 三輪 review 之間覆蓋角度真的差很多 — simplify 看程式碼味道、security 看攻擊面、peer 看「事後看會push back 的點」。peer 抓到的 macOS 平台 bug 是另兩輪 LLM 不會看的角度
+  - Spectra archive 必須在 PR merge 後跑，因為 archive 修改 `openspec/specs/` 與 `openspec/changes/archive/`，需要在 master 上才有意義。如果在 feature branch 上跑會把 archive 操作併入 feature branch，未來想撤回 feature 時 spec 也會跟著被撤回，不乾淨
+- **產出**：
+  - key-trace：
+    - PR #1 (`fa6e50b` → `98445db` merge) — 14 檔 +846 / -38（含 src/main/system-integration.ts、settings-store.ts、assets/tray-icon.png、scripts/generate-tray-icon.mjs 等）
+    - master 後續一個 archive commit（capability spec 落地進 `openspec/specs/system-integration/`）
+  - dev-notes：本 session-log
+  - memory：`feedback_no_co_authored_by.md`（不加 Co-Authored-By trailer）
+- **後續**：
+  - **Hsin 跑實機驗**：`npm run dev` → tray 圖示 / close→hide 通知 / Ctrl+Shift+K 切換 / tray 選單四項（顯示 dashboard / 開機自啟 / 全域熱鍵 / 結束）。task 8.4 留為手動驗
+  - 下一個 v1 change：heatmap + 一日週期分析 / markdown 報告 / Claude 寫總結，三選一
+  - macOS 實機測 tray + auto-launch 行為（目前只有 Win 走 e2e）
+  - PR 流程已立 baseline，後續 v1 / v2 feature 一律走 feature branch + PR
+
+---
+
 ### 2026-04-28｜key-trace 番茄鐘撤回：Spectra REMOVED 流程 + 「行為依賴功能要先確認」教訓
 - **專案**：key-trace
 - **重點**：

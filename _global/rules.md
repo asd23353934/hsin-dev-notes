@@ -45,10 +45,8 @@
 | 事件 | 對應筆記 |
 |---|---|
 | Bug 解決 | `[framework]/errors.md` |
-| 技術選型決策成形 | `_shared/decisions.md`（ADR） |
 | 慣例規則確立 | `[framework]/conventions.md` |
 | 套件升降版 | `[framework]/stack.md` |
-| 效能優化收尾 | `[framework]/performance.md`（目前僅 `postgres/`） |
 | 對話結束或主要任務完成 | `_global/session-log.md` 摘要（一定加） |
 
 理由：等對話結束才整理 → 中段細節在 context 中淡化、多任務混寫不精準。事件當下提議比較鮮活、範圍清晰。

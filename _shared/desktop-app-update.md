@@ -78,7 +78,7 @@
   [System.IO.File]::WriteAllText($ps1, $content, $utf8Bom)
   ```
 
-  注意 git 預設不 strip BOM，但某些編輯器（VSCode 預設無 BOM）會 strip。建議加 `.gitattributes` 強制 ps1 file 保留 BOM，或在 build pipeline 內驗證 BOM 存在。
+  注意 git 預設不 strip BOM，但**多數編輯器（VSCode 預設無 BOM、Claude Code 的 Edit / Write 工具）會 strip**。光「commit 進 repo 一次帶 BOM」不夠 — 任何後續 edit 都會偷偷把 BOM 拿掉，working tree 隨時可能失蹤。實機 v4.3.5 → v4.3.6 升級在這個雷上連踩兩次：第一次手動加 BOM commit、第二次又被某個 Edit 操作 strip 掉，sandbox 升級失敗。所以**只靠 source 端 BOM 不夠**，要走 build pipeline 主動加 + pre-flight 驗證（見下方「BOM 防護三道防線」）。
 - **參考**：這是最隱蔽的雷 — 沒任何 error message，log 不會告訴你 [3/4] 沒跑。要靠 Start-Transcript 或單獨手動跑 launcher with `2>&1` 才看得到 PS 把整段視為 invalid。
 
 ---
@@ -88,3 +88,37 @@
 - **PowerShell 內部 log function** 用 `[System.IO.File]::AppendAllText($logFile, $line, [System.Text.Encoding]::UTF8)` 比 `Out-File -Append -Encoding utf8` 更可預期（後者在 PS 5.1 對 BOM 處理有 quirk）。
 - **launcher 內 MessageBox** 用 `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show(...)`。launcher 啟動時主程式已關閉，dialog 沒有 parent — 直接 attach 到 desktop。bat 版透過 `powershell -Command "..."` wrap，訊息傳遞**用 env var**（`set DLG_REASON=%~1; powershell -Command "...$env:DLG_REASON..."`）避免 cmd → powershell 雙層引號 escape 災難。
 - **驗證 ps1 含中文時**：寫完 ps1 後立即手動跑（不靠 build pipeline），用 `powershell.exe -File script.ps1 ...` 同步跑，看 stderr 有沒有 syntax error。如果 stderr 乾淨但 log 內缺段落，懷疑 BOM。
+
+---
+
+## BOM 防護三道防線
+
+光靠 source 端 BOM 不夠（見 Issue 4 — Edit 工具會 strip）。任何含中文 .ps1 的專案應該三道並用：
+
+1. **Source 端**：手動加 BOM 並 commit；接受 BOM 偶爾會被 strip，當回本不靠它
+
+2. **Build pipeline 端（必要）**：build / zip 流程把 ps1 寫進 dist artifact 時主動 force-add BOM，不論 source 是否含 BOM。Python 範例：
+
+   ```python
+   # zip_release / packaging script
+   shutil.copy2(src_launcher, dest_launcher)
+   if dest_launcher.endswith(".ps1"):
+       with open(dest_launcher, "rb") as f:
+           content = f.read()
+       if not content.startswith(b"\xef\xbb\xbf"):
+           with open(dest_launcher, "wb") as f:
+               f.write(b"\xef\xbb\xbf" + content)
+   ```
+
+3. **Release pre-flight 端**：發布前 check script 掃所有 .ps1 缺 BOM 直接 fail。Python 範例：
+
+   ```python
+   def check_ps1_bom():
+       for path in find_all_ps1():
+           with open(path, "rb") as f:
+               if f.read(3) != b"\xef\xbb\xbf":
+                   return False
+       return True
+   ```
+
+第 2 道是必要的（保證 release artifact 永遠對）；第 3 道是兜底（避免 build pipeline 自己壞掉時帶壞 ZIP 上 release）。

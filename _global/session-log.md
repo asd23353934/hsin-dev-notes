@@ -17,6 +17,25 @@
 
 ---
 
+### 2026-04-30｜skill_tracker v4.3.5 自動更新踩雷大全 + dev-notes `_shared/desktop-app-update.md` 落地
+- **專案**：skill_tracker（Artale 楓之谷技能冷卻追蹤工具，PySide6 + PyInstaller 桌面 app）
+- **重點**：
+  - 改善方向：偵測新版不主動跳 modal dialog（擾），改 header 右上「↑ vX.Y.Z」可點 chip + toast info；點 chip 才開 UpdateDialog。launcher 失敗時 (a) 跳 Windows MessageBox (b) 寫 update_failed.txt marker 到 AppDir，主程式下次啟動讀檔 toast warning + 刪檔（雙保險）
+  - 安全：marker 在 AppDir 同 user 可寫，加 sanitize（限長 200 字、剔控制字元、含 URL 的 reason 直接 fallback 防釣魚）；bat `:show_dialog` 改 env var 傳訊息避免單引號注入
+  - **連環踩 5 個雷才把 sandbox v4.3.4 → v4.3.5 升級走通**：
+    1. lucide arrow-up-circle.svg 沒在 icons/ → chip 不顯示
+    2. PyInstaller 6.x 把 `('file', '.')` datas 放 `_internal/` 而非 dist root → launcher 找不到
+    3. `subprocess.Popen(creationflags=DETACHED_PROCESS | CREATE_NO_WINDOW)` 啟動 PowerShell 立刻死（exit 0 但沒執行 script）
+    4. PS 5.1 雙引號 `"$AppExe (fallback)"` / `Write-Log ("..." + $var + "...")` parse quirk
+    5. **最隱蔽**：.ps1 缺 UTF-8 BOM，PS 5.1 用 cp950 讀中文 → [3/4] block 整段 silent skip 不報錯
+  - 雷 2-5 跨專案有重用價值（PyInstaller 6.x onedir / Python on Windows 啟動 PS / 任何 PS 5.1 含中文 script）→ 落地到 `_shared/desktop-app-update.md`，含設計範本 + 4 條 errors.md 模板紀錄
+- **產出**：
+  - `skill_tracker` repo: commit be406f6（ps1 加 BOM + PS 5.1 雙引號 quirk 修），v4.3.5 release ZIP 已 `--clobber` 替換為含 BOM 版本
+  - `hsin-dev-notes` repo: 新增 `_shared/desktop-app-update.md`、本 session-log 條目
+- **後續**：
+  - skill_tracker 後續可考慮：修 spec.py 讓 PyInstaller 直接放 launcher 到 dist root（不依賴 zip_release post-process）；spec.py 內 datas 路徑與 PyInstaller 6.x 兼容性需驗證
+  - dev-notes 規範按 rule 14 reflective pass 暫不需要（沒過量）；視未來案例累積可分拆 `windows/` 或 `pyinstaller/` 獨立 folder（目前 `_shared/` 一筆夠）
+
 ### 2026-04-29｜key-trace heatmap 落地 + PR 流程廢除 + git staging 漏檔教訓
 - **專案**：key-trace
 - **重點**：

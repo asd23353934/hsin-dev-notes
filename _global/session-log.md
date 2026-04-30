@@ -17,7 +17,7 @@
 
 ---
 
-### 2026-04-30｜skill_tracker v4.3.5 自動更新踩雷大全 + dev-notes `_shared/desktop-app-update.md` 落地
+### 2026-04-30｜skill_tracker v4.3.5 / v4.3.6 自動更新踩雷大全 + BOM 三道防線
 - **專案**：skill_tracker（Artale 楓之谷技能冷卻追蹤工具，PySide6 + PyInstaller 桌面 app）
 - **重點**：
   - 改善方向：偵測新版不主動跳 modal dialog（擾），改 header 右上「↑ vX.Y.Z」可點 chip + toast info；點 chip 才開 UpdateDialog。launcher 失敗時 (a) 跳 Windows MessageBox (b) 寫 update_failed.txt marker 到 AppDir，主程式下次啟動讀檔 toast warning + 刪檔（雙保險）
@@ -29,11 +29,17 @@
     4. PS 5.1 雙引號 `"$AppExe (fallback)"` / `Write-Log ("..." + $var + "...")` parse quirk
     5. **最隱蔽**：.ps1 缺 UTF-8 BOM，PS 5.1 用 cp950 讀中文 → [3/4] block 整段 silent skip 不報錯
   - 雷 2-5 跨專案有重用價值（PyInstaller 6.x onedir / Python on Windows 啟動 PS / 任何 PS 5.1 含中文 script）→ 落地到 `_shared/desktop-app-update.md`，含設計範本 + 4 條 errors.md 模板紀錄
+  - **v4.3.6 後半 — 三個 buff 道具 + 倒數小窗 >600s 改分鐘**：經驗加倍 / 掉寶加倍 / HT加倍（cooldown 1800/1800/3600）；SkillService.is_alert_enabled fallback 改成「item 類預設 True」配合道具短 cooldown 的提前提示需求；SkillWindow._fmt_seconds 在 >600 嚴格大於時切換為「Xm」分鐘顯示。順便補 SkillPixmapCache._index_all_paths 的 path-traversal 白名單（拒 `..` / 路徑分隔符 / Windows drive-letter）。
+  - **v4.3.5 → v4.3.6 sandbox 升級又踩 BOM 第二次**：source ps1 雖然 commit 過 BOM，後續某次 Edit 操作把 BOM strip 掉，working tree 失蹤，build 出來的 v4.3.6 release ZIP 也跟著沒 BOM；sandbox 啟動後 launcher 又走 [3/4] silent skip。Edit / Write 工具（含 Claude Code 自帶）讀 utf-8 strip BOM 是系統性問題，光「commit 一次帶 BOM」不夠。
+  - **三道防線解這個系統性問題**：(1) source 端手動加 BOM；(2) **build pipeline 必加** — `zip_release.py` 把 ps1 寫進 dist 時主動 force-add BOM 不論 source 狀態；(3) pre-flight 兜底 — `check_release.py` 加 `check_ps1_bom` 函式發布前 fail 任何缺 BOM 的 .ps1。三道並用後實測 v4.3.5 → v4.3.6 升級全程 ✅。
+  - **可重複測試流程**：寫 `scripts/reset_sandbox.ps1 -Version v<前一版>` 用 `gh release download` 抓 ZIP（cache 在 %TEMP%）+ 解到 `C:\Temp\skill_tracker_sandbox\` + 驗 BOM；配 `docs/AUTO_UPDATE_TEST.md` 列流程 + 5 個已知雷的 regression 防線。每次 release 後跑這流程驗證升級沒 regression。
 - **產出**：
-  - `skill_tracker` repo: commit be406f6（ps1 加 BOM + PS 5.1 雙引號 quirk 修），v4.3.5 release ZIP 已 `--clobber` 替換為含 BOM 版本
-  - `hsin-dev-notes` repo: 新增 `_shared/desktop-app-update.md`、本 session-log 條目
+  - `skill_tracker` repo: 一連串 commit be406f6（ps1 加 BOM + PS 5.1 雙引號 quirk 修） / 16bfb75（v4.3.6 buff 道具 + 分鐘顯示 + path traversal 防禦） / d83d4ea（reset_sandbox helper + AUTO_UPDATE_TEST doc） / de1ea07（BOM 三道防線：zip_release force-add + check_release verify + source ps1 BOM 修補）
+  - GitHub release: v4.3.5 ZIP 已 `--clobber` 替換含 BOM 版、v4.3.6 release 上線（user-facing 最新）
+  - `hsin-dev-notes` repo: `_shared/desktop-app-update.md` 補「Edit 工具 strip BOM」觀察 + 「BOM 防護三道防線」段落；本 session-log 條目延伸補完
 - **後續**：
   - skill_tracker 後續可考慮：修 spec.py 讓 PyInstaller 直接放 launcher 到 dist root（不依賴 zip_release post-process）；spec.py 內 datas 路徑與 PyInstaller 6.x 兼容性需驗證
+  - 三道防線目前以 v4.3.6 + dev-notes 落地，未來新增其他「含中文 .ps1」專案直接套用相同 pattern
   - dev-notes 規範按 rule 14 reflective pass 暫不需要（沒過量）；視未來案例累積可分拆 `windows/` 或 `pyinstaller/` 獨立 folder（目前 `_shared/` 一筆夠）
 
 ### 2026-04-29｜key-trace heatmap 落地 + PR 流程廢除 + git staging 漏檔教訓

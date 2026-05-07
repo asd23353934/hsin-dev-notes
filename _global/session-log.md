@@ -17,6 +17,20 @@
 
 ---
 
+### 2026-05-07｜em 醫美管理系統架構盤點 + dev-notes 第一筆 nginx HMR 踩坑與 postgres stack 起跳
+- **專案**：em（醫美管理系統，Next.js 16 + Prisma 7 + PostgreSQL）→ 同步落地到 dev-notes
+- **重點**：
+  - **em 全景**：109 Prisma models / 57 ontology entities / 339 APIs / 140+ UI 頁；27+ 路由 group；RBAC 三層（PAGE/FUNC/ROLE_PRESETS，user override > role > workgroup）；inventory PR→PO→GR 狀態機 + appointment lifecycle；docs/ 九層分類（0-入口 / 1-核心 / 2-需求 / 3-產品 / 4-設計 / 5-整合 / 6-部署 / 7-合規 / 8-歸檔）。子系統位置：`app/src/lib/permissions.ts`（權限）、`lib/actions/` + `lib/events/handlers/`（宣告式動作 + 事件驅動）、`lib/ai/`（Claude/OpenAI + 57 entity YAML ontology）、`__tests__/`（vitest 50+ 檔）。
+  - **盤點可遷移性**：強烈建議搬 nginx HMR 踩坑、NextAuth v5 cookie 名、API endpoint 五件套、postgres stack 填內容；不建議搬 RBAC 鍵清單 / 業務狀態機 / ontology / docs 九層分類（高度專案領域、scope 不符）。
+  - **本次落地兩條**：(1) `nextjs/errors.md` 第一筆紀錄 — `next dev` 經 nginx 反代時整頁不規律刷新（HMR wss upgrade fail → fallback polling → full reload），em 0505 用 `bot 連砍 4 處 polling 仍未停 → DevTools 才看到根因` 的曲折診斷過程當教訓，解法給 nginx `map $http_upgrade $connection_upgrade` conditional + `Upgrade $http_upgrade` / `Connection $connection_upgrade` 兩 header 寫法。(2) `postgres/stack.md` 從空殼填入 PG 16-alpine + pg ^8.20.0 + @prisma/adapter-pg ^7.8.0，含開發 5433 / 生產 internal 5432 容器化慣例與 healthcheck。
+  - **版本驗證**：`npm view pg version` → 8.20.0、`npm view @prisma/adapter-pg version` → 7.8.0，與 nextjs/stack.md 的 prisma 7.8 對齊。PG 16-alpine 為 production 主流穩定選擇（2023-09 GA、支援至 2028-11）。
+  - **觀察**：em 的「開發日誌.md」與 dev-notes 的 session-log 形式很像但 scope 不同（前者是專案進度倒序、後者是跨專案技術筆記日誌），不混用。em 內部另開 `CLAUDE.md` + 領域 ontology 是合理分工，dev-notes 維持「跨專案技術慣例」單純定位。
+- **產出**：
+  - `hsin-dev-notes` repo: `nextjs/errors.md`（第一筆實質紀錄 + 最後更新 2026-04-27 → 2026-05-07）、`postgres/stack.md`（空殼 → 完整初版）、`_global/session-log.md`（本條）
+- **後續**：
+  - 中度建議的條目（NextAuth v5 cookie 名 / API endpoint 五件套 / Prisma 7 driver adapter 寫法 / i18n + auth middleware 順序 / nextjs stack.md 微調對齊 em 16.1.6 / 7.5）— 待下次 em 任務或 hsin 主動提時再寫，**不當催促項**
+  - dev-notes reflective pass 距上次（若有）尚短，本次新增量小不需動
+
 ### 2026-04-30｜skill_tracker v4.3.5 / v4.3.6 自動更新踩雷大全 + BOM 三道防線
 - **專案**：skill_tracker（Artale 楓之谷技能冷卻追蹤工具，PySide6 + PyInstaller 桌面 app）
 - **重點**：

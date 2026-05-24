@@ -48,7 +48,12 @@ dev-notes/
 │   ├── conventions.md
 │   └── errors.md
 │
-└── electron/             # Electron 桌面應用專屬
+├── electron/             # Electron 桌面應用專屬
+│   ├── stack.md
+│   ├── conventions.md
+│   └── errors.md
+│
+└── godot/                # Godot 4 / GDScript 專屬（遊戲開發）
     ├── stack.md
     ├── conventions.md
     └── errors.md

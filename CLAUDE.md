@@ -58,7 +58,8 @@ dev-notes/
 └── godot/                      ← Godot 4 / GDScript 專屬（遊戲開發）
     ├── stack.md
     ├── conventions.md
-    └── errors.md
+    ├── errors.md
+    └── plugins.md              ← plugin 採用 / 不採用詳細指南
 ```
 
 ---

@@ -55,6 +55,8 @@ Godot：**編輯器 → 編輯器設定 → Text Editor / External**
 
 > 已驗證 Godot 4.6.3 相容性。版本確認日 2026-05-23。
 > Godot 升版時必須重查每個 plugin 是否仍支援，**不要盲目升級**。
+>
+> **詳細採用 / 不採用理由** → [`godot/plugins.md`](./plugins.md)
 
 ### 強烈推薦（短期就引入）
 

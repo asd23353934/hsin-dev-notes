@@ -56,7 +56,8 @@ dev-notes/
 └── godot/                # Godot 4 / GDScript 專屬（遊戲開發）
     ├── stack.md
     ├── conventions.md
-    └── errors.md
+    ├── errors.md
+    └── plugins.md         # plugin 採用指南（含「不裝」理由）
 ```
 
 未來可能新增 `react/`、`vue/` 等資料夾。

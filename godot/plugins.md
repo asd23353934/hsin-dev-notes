@@ -31,8 +31,8 @@
 
 - **GitHub**：https://github.com/godot-gdunit-labs/gdUnit4
 - **最新版**：v6.1.x (stable) / v6.2 (master)
-- **Godot 相容**：4.5–4.6.x, 4.7-beta1 ✅
-- **何時裝**：**W4 起**（提前自原 W11 計畫）
+- **Godot 相容**：4.5–4.6.2 ✅，**4.6.3 未驗證** ⚠️
+- **何時裝**：**Godot 4.6.2 / 4.7 + v6.1+** 時建議；**4.6.3 + AssetLib v6.0.0 已驗證壞**
 - **使用情境**：
   - GameState 邏輯測試（card-resource-demo 可立刻 retrofit）
   - 戰鬥公式測試（damage / shield / buff 疊加）
@@ -42,6 +42,15 @@
   2. **DFS 規模需要**：80 張卡 + 多 status，沒測試 regression 災難
   3. **學習曲線淺**：基本用法 1 小時，半天能寫 10 個測試
 - **替代**：[GUT](https://github.com/bitwes/Gut)（較舊，feature 較少；不選）
+
+#### ⚠️ 已踩雷（2026-05-26）
+
+AssetLib「GdUnit4 - Unit Testing Framework」(id 4390) 給的是 **v6.0.0**，跟 Godot 4.6.3 不相容（`FileAccess.get_as_text()` API drift，parse error 連鎖 compile fail）。詳見 [`errors.md`](./errors.md)。
+
+**Workaround**：
+- 短期：自寫純 GDScript test harness（無 framework，跨版本免疫）
+- 長期：等 AssetLib 同步到 v6.1.x，或從 [GitHub Releases](https://github.com/godot-gdunit-labs/gdUnit4/releases) 抓最新 zip 手動裝
+- 安裝前**先到 plugin GitHub README 確認支援的 minor 版本**，不能信「Godot 4」標籤
 
 ### ⭐⭐⭐⭐⭐ Dialogic 2 — VN 對話系統
 

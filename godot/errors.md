@@ -186,3 +186,48 @@
   2. 跑起來看 error 訊息
   3. 把 error 訊息丟回 AI 問正確 4.x API
 - **預防**：跟 AI 對話開頭明確說「**這是 Godot 4.6**」。
+
+---
+
+### GdUnit4 v6.0.0 跟 Godot 4.6.3 不相容（AssetLib 沒同步最新版）
+
+- **適用版本**：Godot 4.6.3 + GdUnit4 v6.0.0（AssetLib 最新）
+- **日期**：2026-05-26
+- **環境**：Godot 4.6.3.stable，從 AssetLib「GdUnit4 - Unit Testing Framework」(id 4390) 下載
+- **問題**：plugin 啟用後跳「Failed to load script "res://addons/gdUnit4/plugin.gd" with error "Compilation failed"」+ 連鎖 10 個 compile error。GdUnit Inspector tab 出不來。
+- **根因**：
+  ```
+  GdUnitFileAccess.gd:199 - Parse Error:
+  Too many arguments for "get_as_text()" call.
+  Expected at most 0 but received 1.
+  ```
+  Godot 4.6 把 `FileAccess.get_as_text()` 的參數簽名改成 0 個（舊版可傳 bool）。GdUnit4 v6.0.0 是針對舊 API 寫的。
+- **解法**（依嚴重度 / 速度）：
+  1. **完全跳過 framework，自寫 test harness**（推薦給學習階段）：純 GDScript 寫 test_runner + assertion helpers，跨版本免疫
+  2. **手動裝 v6.1.x 或 v6.2 master**：從 [GitHub Releases](https://github.com/godot-gdunit-labs/gdUnit4/releases) 抓 zip，砍掉 `addons/gdUnit4/` 解新版進去（**v6.1 官方支援 4.6.0-4.6.2，對 4.6.3 還沒驗證**）
+  3. **降 Godot 到 4.6.2**：不建議，向後走
+- **驗證 plugin 是否相容前**：到 GitHub README 看「Compatibility」段，confirm 你的 Godot minor 版本（不能信「Godot 4」標籤）
+- **延伸**：AssetLib 版本經常滯後於 GitHub release 數週到數月。**關鍵 plugin 直接抓 GitHub release zip** 比 AssetLib 安全。
+
+---
+
+### EventBus pattern 觸發 unused_signal 警告
+
+- **適用版本**：Godot 4.x
+- **日期**：2026-05-26
+- **環境**：Godot 4.6.3，autoload event_bus.gd 宣告 11 個 signal
+- **問題**：EventBus autoload 自己只**宣告** signal 給別人 emit，跑起來每個 signal 都跳「The signal "X" is declared but never explicitly used in the class」警告（11 個 signal × 1 警告 = 11 條噪音）
+- **原因**：Godot 的 `unused_signal` 警告偵測「class 內有沒有 emit 這個 signal」。EventBus 設計上**就是不 emit**，由其他 script 跨 scene emit，所以 GDScript 靜態分析認為它沒用。**這是 EventBus pattern 的標準誤判。**
+- **解法**：在 event_bus.gd 開頭加整檔靜音
+  ```gdscript
+  extends Node
+
+  # EventBus pattern：本檔只「宣告」signal 給別 script emit。
+  @warning_ignore_start("unused_signal")
+
+  signal card_played(...)
+  signal damage_dealt(...)
+  # ...
+  ```
+- **`@warning_ignore_start`**：Godot 4.3+ 引入，作用到檔尾或 `@warning_ignore_restore` 為止
+- **不推薦做法**：把 `unused_signal` 警告層級在 project.godot 設為 ignore（影響整個 project，可能漏掉真的 unused signal bug）

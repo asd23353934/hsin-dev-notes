@@ -211,6 +211,40 @@
 
 ---
 
+### Autoload 之間有相依時順序錯 → Parse Error 大爆炸
+
+- **適用版本**：Godot 4.x（特別 4.6 較嚴格）
+- **日期**：2026-05-26
+- **環境**：Godot 4.6.3.stable，新建 deckbuilder-prototype 從 W3 複製 autoload
+- **問題**：`project.godot` 寫
+  ```
+  [autoload]
+  GameState="*res://autoload/game_state.gd"   ← 第 1 個
+  EventBus="*res://autoload/event_bus.gd"     ← 第 2 個
+  ```
+  重新載入專案後爆 30+ 個 `Parse Error: Identifier "EventBus" not declared in the current scope.`，整 project 跑不起來。
+- **原因**：
+  - Godot 啟動時依 autoload 順序 **逐一 parse**
+  - GameState 內部用了 `EventBus.damage_dealt.emit()`
+  - GameState 比 EventBus 早 parse → 此時 EventBus identifier 還沒註冊 → Parse Error
+  - Godot 4 比 3 嚴格，3 時代某些 forward reference 可以容忍，4 在 parse 階段就 catch
+- **解法**：**被依賴的 autoload 放上面**
+  ```
+  [autoload]
+  EventBus="*res://autoload/event_bus.gd"     ← 先（被依賴）
+  GameState="*res://autoload/game_state.gd"   ← 後（依賴 EventBus）
+  ```
+- **通則**：autoload 依賴關係決定順序
+  | 角色 | 順序 |
+  |---|---|
+  | 純資料 / signal hub（EventBus、Constants） | 上 |
+  | 邏輯狀態（GameState、PlayerStats） | 中 |
+  | 跨模組整合（AudioManager、SceneRouter） | 下 |
+- **驗證方法**：重新載入專案後 Output 應該按 autoload 順序印 `_ready` log
+- **預防**：寫 autoload 時先想「我會 reference 誰」→ 那個必須註冊在我前面
+
+---
+
 ### EventBus pattern 觸發 unused_signal 警告
 
 - **適用版本**：Godot 4.x

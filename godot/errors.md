@@ -265,3 +265,52 @@
   ```
 - **`@warning_ignore_start`**：Godot 4.3+ 引入，作用到檔尾或 `@warning_ignore_restore` 為止
 - **不推薦做法**：把 `unused_signal` 警告層級在 project.godot 設為 ignore（影響整個 project，可能漏掉真的 unused signal bug）
+
+---
+
+### Scene 過場期間按鈕沒 disable → 玩家偷跑（race condition）
+
+- **適用版本**：Godot 4.x（async/await 場景切換通用）
+- **日期**：2026-05-29
+- **環境**：Godot 4.6.3，DFS W14 棋盤擲骰 → 戰鬥場景切換
+- **問題**：棋盤點「擲骰移動」→ 玩家走到敵人格 → 場景切換前有 0.6 秒視覺停頓（顯示「遭遇敵人」訊息 + fade）→ **這 0.6 秒內玩家可以再點擲骰** → 角色再移動一格（甚至再撞另一隻敵）→ 切到 combat 的是「下一個 tile」而不是真正撞到的那一個 → `pending_remove_enemy_tile` 也被覆蓋成錯的
+- **原因**：移動函式 `_move_player` 在 await tween 結束後立刻 `_is_moving = false` + `button.disabled = false`，但實際的「切 scene」流程還沒走完。await 之間的 0.6 秒 timer 是「行為意義上仍在過場」但「狀態旗標已重設」。
+
+  典型錯誤示意：
+  ```gdscript
+  func _move_player(steps):
+      _is_moving = true
+      button.disabled = true
+      for i in steps:
+          await tween.finished
+      _is_moving = false       # ❌ 太早重設
+      button.disabled = false  # ❌ 此時 caller 還會 await 0.6 秒
+
+  func _trigger_encounter():
+      await timer(0.6).timeout  # ← 這 0.6 秒按鈕又能按了
+      SceneRouter.change_scene(...)
+  ```
+
+- **解法**：lock 的責任改由 caller 承擔，依「會不會切 scene」決定要不要 re-enable：
+  ```gdscript
+  func _on_roll_pressed():
+      if _is_moving: return
+      var encountered = await _move_player(roll)
+      if encountered:
+          await _trigger_encounter()  # 切 scene，不 re-enable
+          return
+      var changing_scene = await _resolve_tile()
+      if changing_scene: return
+      # 確定沒切 scene 才 re-enable
+      _is_moving = false
+      button.disabled = false
+
+  func _move_player(steps) -> bool:
+      _is_moving = true
+      button.disabled = true
+      for i in steps: await tween.finished
+      # 故意不在此 re-enable，留給 caller
+      return encountered
+  ```
+- **觀念**：async/await 場景過場的 race condition 一定要把「lock 範圍 = 整個過場」想清楚。`await tween.finished` 不等於「使用者操作的 logical end」，後續還有 timer / scene change / fade。一旦切 scene 失敗或被中斷，重新進來的 board scene 是 fresh instance（_is_moving = false 預設），所以「忘了 re-enable」不會 stuck。
+- **面試 talking point**：「Godot 的 async/await 跟 JS Promise 類似，但 scene tree 是長生 stateful，rance condition 比 web 還容易踩。我在 DFS 把 lock 責任從『動作執行者』移到『動作協調者』(caller)，誰知道流程會不會切 scene 誰負責 lock — 單一職責。」

@@ -314,3 +314,25 @@
   ```
 - **觀念**：async/await 場景過場的 race condition 一定要把「lock 範圍 = 整個過場」想清楚。`await tween.finished` 不等於「使用者操作的 logical end」，後續還有 timer / scene change / fade。一旦切 scene 失敗或被中斷，重新進來的 board scene 是 fresh instance（_is_moving = false 預設），所以「忘了 re-enable」不會 stuck。
 - **面試 talking point**：「Godot 的 async/await 跟 JS Promise 類似，但 scene tree 是長生 stateful，rance condition 比 web 還容易踩。我在 DFS 把 lock 責任從『動作執行者』移到『動作協調者』(caller)，誰知道流程會不會切 scene 誰負責 lock — 單一職責。」
+
+---
+
+### 編輯器「嵌入式遊戲視窗」導致全螢幕 / resize 無效
+
+- **適用版本**：Godot 4.4+（embed game window 功能）
+- **日期**：2026-06-05
+- **環境**：Godot 4.6.3.stable
+- **問題**：F5 跑遊戲，settings 勾「全螢幕」沒反應、視窗 resize 放大卡住固定原大小。console 印 `Embedded window only supports Windowed mode` / `Embedded window can't be resized` / `can't be moved`
+- **原因**：Godot 4.4+ 預設把遊戲嵌在編輯器「遊戲」workspace（embedded window）。嵌入視窗**天生不支援**全螢幕 / resize / move。**不是遊戲 bug**，遊戲的 stretch / fullscreen 設定其實都對。
+- **解法**：編輯器 → 編輯器設定 → 執行 → 視窗擺放 → **遊戲內嵌模式 → Disabled** → **重啟編輯器**（關鍵，光改設定不重啟常常沒用）→ F5 → 遊戲獨立視窗，全螢幕正常
+- **教訓**：① 視窗行為怪先看 console（"Embedded window..." 一目了然）② 改 embed 設定要重啟編輯器生效 ③ 最終發布是 .exe 獨立視窗，本來就沒這問題
+
+### stretch/aspect=keep → 視窗化非 16:9 比例時有黑邊（正常 letterbox）
+
+- **適用版本**：Godot 4.x
+- **日期**：2026-06-05
+- **問題**：視窗拉成非 16:9 比例時，畫面上下或左右出現黑邊
+- **原因**：`window/stretch/aspect="keep"`（Godot 預設）保持遊戲設計比例 → 視窗非該比例時 letterbox 補黑邊，避免畫面變形 / UI 跑版。**這是正確行為，所有遊戲都這樣。**
+- **避免黑邊**：視窗用設計比例（16:9 解析度）就沒黑邊；黑邊只在手動拉成怪比例時出現
+- **不推薦** `aspect="expand"`（固定位置 UI 會跑版）/ `aspect="ignore"`（畫面變形）
+- **注意**：`aspect=keep` 是預設值，Godot 存 project.godot 時會**省略不寫進檔案**（看不到該行不代表沒生效，行為仍是 keep）

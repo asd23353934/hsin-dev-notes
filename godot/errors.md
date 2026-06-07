@@ -2,7 +2,7 @@
 
 > Godot 4 / GDScript 相關問題與解法。
 > 遇到錯誤先查這裡有沒有紀錄；解完新坑請補上。
-> 最後更新：2026-05-23
+> 最後更新：2026-06-07
 
 ---
 
@@ -336,3 +336,37 @@
 - **避免黑邊**：視窗用設計比例（16:9 解析度）就沒黑邊；黑邊只在手動拉成怪比例時出現
 - **不推薦** `aspect="expand"`（固定位置 UI 會跑版）/ `aspect="ignore"`（畫面變形）
 - **注意**：`aspect=keep` 是預設值，Godot 存 project.godot 時會**省略不寫進檔案**（看不到該行不代表沒生效，行為仍是 keep）
+
+---
+
+### Polygon2D internal vertex 單獨改不渲染（程式做 2D 立繪動畫的死路）
+
+- **適用版本**：Godot 4.x
+- **日期**：2026-06-07
+- **環境**：Godot 4.6.3.stable
+- **問題**：想用程式讓單張立繪「分部位動」。建 Polygon2D（含 internal vertices 細分網格），每幀改 polygon 陣列裡的 internal 頂點位置做雙馬尾擺動 → 畫面完全不變形（頂點值有改、`_process` 有跑、print 都正常，渲染就是沒反應）
+- **原因**：Polygon2D 的 **internal vertices 只在「搭配 Skeleton2D 骨架變形」時才參與渲染**。沒骨架時 Polygon2D 只用「邊界多邊形」（polygon 前 N 個非 internal 點）渲染，internal 點被忽略 → 改它們無效。而 Skeleton2D + Bone2D weight 變形本身又被官方標為 buggy / unreliable。
+- **解法**：單張立繪要骨架動畫，**別用程式硬幹 Godot 原生 2D skeleton**。正規解：
+  - **Live2D**（Cubism Editor 做模型 + GDCubism 進 Godot）— VN/H game 業界標準
+  - cutout 切圖分層 + 各部位 Sprite2D + AnimationPlayer
+  - 多張 frame 圖 AnimatedSprite2D
+- **教訓**：試了 6 種程式法（單圖 Tween / 程式 rigged Polygon2D / 直接推 internal vertex…）全撞同一道牆。根因是「單張圖在 Godot 硬做骨架動畫」是引擎本質限制 → 認清後選對工具（Live2D）比硬幹有效。
+
+---
+
+### TranslationServer 只建一個 locale → 其他 locale 全 fallback 到它
+
+- **適用版本**：Godot 4.x
+- **日期**：2026-06-07
+- **環境**：Godot 4.6.3.stable
+- **問題**：程式建 i18n（中文當 key），只 `add_translation` 一份 `en` Translation。預設 locale=`zh_TW`，但畫面全顯示英文（語言下拉還顯示「繁體中文」、動態中文字串卻沒翻 → 矛盾）
+- **原因**：`set_locale("zh_TW")` 後 `tr("設定")` 找不到 zh_TW translation → **fallback 到唯一存在的 en** → 回 "Settings"。只建 en = 任何 locale 都 fallback 到 en。
+- **解法**：**當前 locale 也要有 translation**（即使 identity）。zh_TW 建一份 key→key 自己：
+  ```gdscript
+  var zh := Translation.new()
+  zh.locale = "zh_TW"
+  for k in TRANSLATIONS:
+      zh.add_message(k, k)  # identity：有東西可查，不 fallback
+  TranslationServer.add_translation(zh)
+  ```
+- **補充**：① 靜態 UI（`Control.text`）靠 auto_translate 自動翻；動態字串（程式組的）要手動 `tr()` ② 切 locale 時動態字串不自動更新，需 `_notification(NOTIFICATION_TRANSLATION_CHANGED)` 重整

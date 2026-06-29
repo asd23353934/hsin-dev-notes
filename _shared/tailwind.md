@@ -96,7 +96,7 @@ CSS 進入點：
 
 ## class 排序
 
-- 用 `prettier-plugin-tailwindcss`（已驗證 v0.7.3 相容 prettier 3.x、tailwind v4）
+- 用 `prettier-plugin-tailwindcss`（已驗證 v0.8.0 相容 prettier 3.x、tailwind v4）
 - 排序原則：layout → spacing → sizing → typography → color → effects → state variants
 
 ---

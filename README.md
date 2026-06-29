@@ -53,14 +53,23 @@ dev-notes/
 │   ├── conventions.md
 │   └── errors.md
 │
-└── godot/                # Godot 4 / GDScript 專屬（遊戲開發）
-    ├── stack.md
-    ├── conventions.md
-    ├── errors.md
-    └── plugins.md         # plugin 採用指南（含「不裝」理由）
+├── postgres/            # PostgreSQL 專屬
+│   ├── stack.md
+│   ├── conventions.md
+│   └── errors.md
+│
+├── godot/               # Godot 4 / GDScript 專屬（遊戲開發）
+│   ├── stack.md
+│   ├── conventions.md
+│   ├── errors.md
+│   └── plugins.md        # plugin 採用 / 不採用指南
+│
+├── unity/               # Unity / C#（遊戲）
+├── vue/                 # Vue / Nuxt
+└── go/                  # Go
 ```
 
-未來可能新增 `react/`、`vue/` 等資料夾。
+2026-06-29 補上 `unity/`（C# 遊戲）、`vue/`（Vue/Nuxt）、`go/` 三個資料夾（先建 `stack.md` 導引，版本待實際專案驗證後補）。未來可能再加 `react/` 等。
 
 ---
 
@@ -125,10 +134,11 @@ dev-notes/
 ln -s ~/dev-notes/_global/rules.md /path/to/project/CLAUDE-RULES.md
 ```
 
-**做法 C**：直接在 `~/.claude/CLAUDE.md`（全域）寫：
+**做法 C（全域，已採用）**：在 `~/.claude/CLAUDE.md` import 本 repo 的全域規則，讓**任何專案**的 Claude Code 都自動載入：
 ```markdown
-請優先參考 ~/dev-notes/ 的所有 .md 檔案內容。
+@~/Desktop/gitlab/hsin-dev-notes/_global/rules.md
 ```
+（user 層、每個 session 自動載入；其餘按主題按需讀。本機 clone 在 `~/Desktop/gitlab/hsin-dev-notes`。）
 
 > 做法 B/C 適合**新專案 / 與 dev-notes 版本一致**的情境。舊專案請走推薦做法。
 
@@ -173,4 +183,6 @@ update(global): clarify error log format
 
 ## 版本歷史
 
+- **2026-06-29** 首次 reflective pass：CLAUDE.md 去重瘦身、`rules.md` 補 §15–18（git / secrets / migration / AI context）、新增 `unity/` `vue/` `go/`、接上 `~/.claude/CLAUDE.md` 全域
+- **2026-05-07** em 架構盤點，補 `nextjs/errors.md` 首筆、`postgres/stack.md` 起跳
 - **2026-04-27** 初始建立，含 Angular 框架資料夾、_global、_shared 結構

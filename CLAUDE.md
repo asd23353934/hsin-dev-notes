@@ -1,15 +1,15 @@
 # CLAUDE.md
 
 > 給 Claude Code 的指令。本 repo 是 Hsin 的個人開發筆記，跨專案共用，不是程式碼專案。
-> 協助開發時優先依本 repo 規則回應。
+> **本檔只放「入口 + 結構 + 觸發路由 + 共用模板」;行為規則的單一來源是 `_global/rules.md`,不在此重複**(依該檔 §14「CLAUDE.md 與 rules.md 重疊 → 留一處」)。
 
 ---
 
 ## 基本資訊
 
 - **使用者**：Hsin
-- **回覆語言**：**繁體中文**（最高優先，不論輸入語言）
-- **主技術棧**：Angular + PrimeNG + Tailwind CSS + TypeScript（也可能涉及 React、Vue、Python 等）
+- **回覆語言**：**繁體中文**（完整規則見 `_global/rules.md` §1）
+- **主技術棧**：Angular + PrimeNG + Tailwind + TypeScript;也涉及 Next.js、Python、Electron、PostgreSQL、Godot、Unity(C#)、Vue/Nuxt、Go
 
 ---
 
@@ -17,121 +17,57 @@
 
 ```
 dev-notes/
-├── CLAUDE.md                   ← 本檔（給 Claude 的指令）
-├── README.md                   ← 給人類看的使用說明
+├── CLAUDE.md            ← 本檔（入口 / 結構 / 路由 / 模板）
+├── README.md           ← 給人類看的使用說明
 │
-├── _global/                    ← 全域規則
-│   ├── rules.md                ← 給 Claude 的長期指令（最高優先）
-│   ├── skill.md                ← Claude Code 工具/skill/subagent 使用規範
-│   └── session-log.md          ← 對話日誌
+├── _global/            ← 全域規則（任何對話都適用）
+│   ├── rules.md        ← 行為規則的單一來源（最高優先）
+│   ├── skill.md        ← Claude Code 工具/skill/subagent 使用規範
+│   └── session-log.md  ← 對話日誌
 │
-├── _shared/                    ← 跨技術棧共用
-│   ├── typescript.md
-│   ├── tailwind.md
-│   └── spectra.md              ← Spec-Driven Development 工具流程
+├── _shared/            ← 跨技術棧共用（typescript / tailwind / spectra）
 │
-├── angular/                    ← Angular 專屬
-│   ├── stack.md                ← 套件版本（事實）
-│   ├── conventions.md          ← 寫法慣例（決議）
-│   └── errors.md               ← 踩坑紀錄與解法
-│
-├── nextjs/                     ← Next.js 專屬（App Router）
-│   ├── stack.md
-│   ├── conventions.md
-│   └── errors.md
-│
-├── python/                     ← Python 專屬（爬蟲 / Worker）
-│   ├── stack.md
-│   ├── conventions.md
-│   └── errors.md
-│
-├── electron/                   ← Electron 桌面應用專屬
-│   ├── stack.md
-│   ├── conventions.md
-│   └── errors.md
-│
-├── postgres/                   ← PostgreSQL 專屬
-│   ├── stack.md
-│   ├── conventions.md
-│   └── errors.md
-│
-└── godot/                      ← Godot 4 / GDScript 專屬（遊戲開發）
-    ├── stack.md
-    ├── conventions.md
-    ├── errors.md
-    └── plugins.md              ← plugin 採用 / 不採用詳細指南
+├── angular/            ← Angular（stack / conventions / errors）
+├── nextjs/             ← Next.js（App Router）
+├── python/             ← Python（爬蟲 / Worker）
+├── electron/           ← Electron 桌面應用
+├── postgres/           ← PostgreSQL
+├── godot/              ← Godot 4 / GDScript（含 plugins.md）
+├── unity/              ← Unity / C#（遊戲）
+├── vue/                ← Vue / Nuxt
+└── go/                 ← Go
 ```
 
----
-
-## 對話開始時
-
-必讀 `_global/rules.md`。其餘依當下主題按需讀取：Angular → `angular/conventions.md` + `stack.md`；Next.js → `nextjs/conventions.md` + `stack.md`；Python → `python/conventions.md` + `stack.md`；Electron → `electron/conventions.md` + `stack.md`；PostgreSQL → `postgres/conventions.md` + `stack.md`；Godot / GDScript → `godot/conventions.md` + `stack.md`；TypeScript → `_shared/typescript.md`；Tailwind → `_shared/tailwind.md`；專案根目錄有 `openspec/` → `_shared/spectra.md`；遇錯先查 `[framework]/errors.md`；涉及 Claude Code 工具/skill/subagent/slash command 行為 → `_global/skill.md`。不需每次全讀。
+每個技術棧資料夾的慣例：`stack.md`（版本，事實型）、`conventions.md`（決議型）、`errors.md`（踩坑紀錄）。
 
 ---
 
-## 開發協助規則
+## 對話開始時（觸發路由）
 
-### 版本來源優先順序
+必讀 `_global/rules.md`（最高優先行為規則）。其餘**依當下主題按需讀取，不必每次全讀**：
 
-實際專案內，**先讀該專案 `package.json`**，不可直接套 dev-notes 的 `stack.md`。
+- Angular → `angular/`;Next.js → `nextjs/`;Python → `python/`;Electron → `electron/`;PostgreSQL → `postgres/`;Godot → `godot/`;Unity/C# → `unity/`;Vue/Nuxt → `vue/`;Go → `go/`（各取 `conventions.md` + `stack.md`）
+- TypeScript → `_shared/typescript.md`;Tailwind → `_shared/tailwind.md`;專案根有 `openspec/` → `_shared/spectra.md`
+- 遇錯先查 `[framework]/errors.md`
+- 涉及 Claude Code 工具 / skill / subagent / slash command 行為 → `_global/skill.md`
+
+---
+
+## 版本來源優先順序
+
+實際專案內，**先讀該專案 `package.json`**，不可直接套 dev-notes 的 `stack.md`：
 
 - 專案版本較舊 → 用該版本對應 API，**不主動建議升級**
 - 專案版本較新 → 任務結束後可提議「同步回 stack.md？」
 - PrimeNG / Tailwind 等大版本斷層 → **絕對不可**用新版 API 套舊版專案
 
-`stack.md` 的角色僅是「新專案起手套餐」與「沒 package.json 時的預設」，不是強制版本。
-
-### 版本驗證
-
-只要對話中出現具體版本號（寫 stack.md、產 code、推薦套件、回答相容性、建議升降版），都必須先驗證，**不可憑記憶或訓練資料猜**：
-
-1. **存在性** → `npm view <pkg> versions` 等，確認版本真實存在、未 deprecate / unpublish
-2. **API 相符** → 比對該版本 API 變動（例：Angular 16 沒 `@if`、Angular 19 預設 zoneless、React 19 才有 `use()`）。與 `conventions.md` 不符要主動提示
-3. **相容性** → peerDependencies、最低 Node / TS 版本，有衝突要先講
-
-Hsin 直接給定版本（貼 `package.json`）時仍要做 2、3 步，不能盲信。
-
-### 程式碼產出
-
-依專案 `package.json`（無專案上下文則依 `[framework]/stack.md`）的版本給對應寫法，並遵循 `[framework]/conventions.md` 的決議與 `_global/rules.md` 的規則。
-
-### Debug
-
-先看錯誤與相關程式碼，再查 `[framework]/errors.md`。已有紀錄就套用過去解法並提醒 Hsin；沒有就一般 debug，解決後**主動提議寫入 errors.md**。
-
-### 不要做的事
-
-- 不主動重構與當前需求無關的程式碼
-- 不在沒看程式碼前猜解法
-- 不產出已過時的 API
-- 不過度使用 emoji 與 bullet points（自然段落為主）
+`stack.md` 只是「新專案起手套餐」與「沒 package.json 時的預設」，不是強制版本。寫版本前一律走 `_global/rules.md` §7 的版本驗證三步驟。
 
 ---
 
-## 主動提議筆記更新（事件型 + 對話結束時）
+## 共用模板（單一來源，各檔不重複）
 
-**不等對話結束 / 不等 Hsin 開口請更新**，發生下列事件當下就主動提議（細節見 `_global/rules.md` 第 6 條）：
-
-- Bug 解決 → `[framework]/errors.md`
-- 慣例規則確立 → `[framework]/conventions.md`
-- 套件升降版 → `[framework]/stack.md`
-- 對話結束（「好了」「謝謝」「先這樣」「我去吃飯了」）或主要任務完成 → 加 `_global/session-log.md` 摘要
-
-同意後直接修改，最後列改了哪些 + 提示 `git diff` + 建議 commit message。
-
----
-
-## 筆記更新原則
-
-### `stack.md`（事實型）
-只記版本號與套件增減，不寫怎麼用。**被動更新**：只在 (1) 實際專案任務結束後主動提議同步，或 (2) Hsin 主動要求 時才寫入。不要在對話盤點時把「stack.md 待補」列為待辦催促。寫入前一律走版本驗證三步驟。
-
-### `conventions.md`（決議型）
-只記「我們／我個人」的決議，不抄官方文件。格式：**規則 → 範例 → 理由**。
-
-### `errors.md`（紀錄型）
-固定模板（**「適用版本」必填**，因跨多版本專案使用）：
+### `errors.md` 紀錄模板（「適用版本」必填，因跨多版本專案使用）
 
 ```markdown
 ### 問題標題
@@ -144,8 +80,7 @@ Hsin 直接給定版本（貼 `package.json`）時仍要做 2、3 步，不能�
 - **參考**：連結（可選）
 ```
 
-### `session-log.md`（日誌型）
-**新紀錄加在最上面**（倒序）。模板：
+### `session-log.md` 紀錄模板（新紀錄加最上面，倒序）
 
 ```markdown
 ### YYYY-MM-DD｜本次主題
@@ -155,24 +90,24 @@ Hsin 直接給定版本（貼 `package.json`）時仍要做 2、3 步，不能�
 - **後續**：待辦
 ```
 
+筆記何時更新、更新原則（stack 被動 / conventions 決議型 / 事件型主動提議）見 `_global/rules.md` §6、§8。
+
+---
+
+## Git 操作（本 repo 的執行流程）
+
+commit / 訊息 / 安全紀律見 `_global/rules.md` §15。本 repo 的操作流程：
+
+- 改檔後**不自動 commit**，可主動建議 commit message
+- scope 對應資料夾（`angular` / `nextjs` / `python` / `electron` / `postgres` / `godot` / `unity` / `vue` / `go` / `shared` / `global`）
+- **不主動 push**；每次 commit 後**立刻詢問**：「已 commit `<sha-short>`，本地領先 origin/master N 個。要 push 嗎？」yes → push，no → 不動作（理由：切到其他專案後易忘記回來推送，保留每次確認權）
+
 ---
 
 ## 衝突處理
 
-當 Hsin 當下指令與本 repo 規則衝突：優先遵守當下指令，並**主動提醒**既有規則內容，詢問是否為刻意或要更新規則。版本衝突（例：stack.md 寫 Angular 17 但 Hsin 貼 Angular 19 code）→ 主動提議更新 stack.md。
-
----
-
-## Git 操作
-
-- 修改檔案後**不自動 commit**，但可主動建議 commit message
-- 風格：`<type>(<scope>): <繁中描述>`，type 用 `docs` / `fix` / `update`，scope 對應資料夾（`angular` / `nextjs` / `python` / `electron` / `postgres` / `godot` / `shared` / `global`）
-- **不主動 push**，但每次 commit 後**立刻詢問**：「已 commit `<sha-short>`，本地領先 origin/master N 個。要 push 嗎？」
-  - Hsin 回 yes → `git push`；回 no → 不動作
-  - 理由：避免切到其他專案後忘記回來推送，但保留每次確認權
-
----
+Hsin 當下指令與本 repo 規則衝突：**優先遵守當下指令**，並主動提醒既有規則、問是刻意還是要更新規則。版本衝突（如 stack.md 寫 Angular 17 但 Hsin 貼 Angular 19 code）→ 主動提議更新 stack.md。
 
 ## 結構演進
 
-新增技術棧、檔案結構變更、發現有用的新協作模式，或 Hsin 反覆叮嚀某條未列出的規則時，主動提議更新本檔或新增資料夾／拆檔（例如某個套件章節在 `conventions.md` 超過 100 行時可拆獨立檔）。
+新增技術棧、結構變更、發現有用的新協作模式，或 Hsin 反覆叮嚀某條未列出的規則時，主動提議更新本檔或新增資料夾／拆檔（例如某 `conventions.md` 超過 200 行時拆獨立檔，見 `_global/rules.md` §14）。

@@ -158,3 +158,34 @@
 - **重複** — `CLAUDE.md` 與 `rules.md` 內容重疊 → 留一處
 
 提議給使用者 → 確認後動手。
+
+---
+
+## 15. Git / commit 紀律
+
+- **Atomic commit**：一個 commit 一個邏輯改動。修兩個不相干的 bug → 拆兩個 commit，方便 review 與 revert
+- **訊息走 Conventional Commits**：`<type>(<scope>): <繁中描述>`，type 用 `feat` / `fix` / `docs` / `refactor` / `update`，描述用祈使語氣（「修正」不是「修正了」）
+- **commit 前先 `git status` + `git diff --staged` 核對範圍**，不要 `git add .` 把不相關的檔也帶進去（session-log 有漏檔 / 多帶檔教訓）
+- **不主動 commit、不主動 push**（操作流程見 `CLAUDE.md`「Git 操作」）
+- **不加 AI 署名 trailer**（`Co-Authored-By: Claude…`），避免 GitHub 把 Claude 算成 repo contributor（踩過）
+
+## 16. Secrets / 環境變數安全
+
+- 祕密（API key / token / 密碼 / 連線字串）**絕不進 git**；`.env` 一律加進 `.gitignore`
+- 提供 `.env.example`（只有變數名 + dummy / 空值）讓人 `cp .env.example .env` 後填真值
+- log 與錯誤訊息**不印祕密**；程式**不硬編金鑰**，一律走環境變數
+- `.gitignore` 只擋未追蹤檔：**已 commit 過的祕密**，`git rm --cached` + 加 gitignore **不夠**，history 仍在 → 要 `git filter-repo` / BFG 清 history，並**立即 rotate 該金鑰**
+- 分層防護：gitignore + `.env.example` + （專案需要時）pre-commit secret 掃描
+
+## 17. 資料庫 migration 紀律
+
+- **已套用（尤其上 production）的 migration 不可再改**；要變更開**新 migration**（schema 變成 source of truth）
+- migration 盡量**可逆**，寫了 down 要測 `up → down → up` 循環確認 down 真的還原
+- migration 檔**必 commit**、與 seed 分開、檔名含時間戳保順序
+- 破壞性變更（drop column / table）**分階段**：先停用（停寫、改 nullable）→ 確認無依賴 → 再刪，不一步到位
+
+## 18. AI 協作：長對話 / context 管理
+
+- 長對話、context 變雜 → **主動提議**總結重點或開新對話，別硬撐到 lost-in-the-middle（與 §14 的「筆記過量」同源，這條管「對話過量」）
+- subagent / 工具結果**不會自動顯示給 Hsin**，回主對話要自己**濃縮重點再講**（呼應 `skill.md` §2）
+- 一次性的查證 / 中間產物**別塞進長期筆記**（memory / rules / conventions），只沉澱「可複用的結論」

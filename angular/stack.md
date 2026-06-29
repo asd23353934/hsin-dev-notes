@@ -71,7 +71,6 @@
 - rxjs 7.8.2 ✓ `@angular/core` peer
 - zone.js 0.16.1 ✓ `@angular/core` peer
 - PrimeNG 21.1.6 ✓ `@angular/core ^21.0.7`、`@angular/cdk ^21.0.0`
-- prettier-plugin-tailwindcss 0.7.3 ✓ `prettier ^3.0`
 
 ---
 

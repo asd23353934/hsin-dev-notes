@@ -17,6 +17,17 @@
 
 ---
 
+### 2026-06-29｜dev-notes 首次 reflective pass（§14）+ 接上全域
+- **專案**：hsin-dev-notes 本身
+- **重點**：
+  - §14（反思濃縮）自 2026-04-29 加入後**首次執行**。最大冗餘是 `CLAUDE.md` 與 `rules.md` 約 70–80% 重複（版本驗證三步驟連範例都一字不差）→ CLAUDE.md 瘦成「入口 / 結構 / 路由 / 模板」，行為規則單一來源回歸 `rules.md`。
+  - `rules.md` 補 §15 git 紀律 / §16 secrets / §17 migration / §18 AI 長對話 context，各帶業界依據（Conventional Commits、`.env.example` + filter-repo、migration 不可改已套用、lost-in-the-middle）。
+  - 清過時：刪 `angular/stack.md` 殘留的 `prettier-plugin-tailwindcss 0.7.3` 舊行、`_shared/tailwind.md` 同步 0.8.0。
+  - 補結構缺口：新增 `unity/`、`vue/`、`go/`（對應 GitHub 的 dice-fate-survivor-unity / Nuxt3 / noteGolang），先建 `stack.md` 導引、版本待實際專案驗證後補。
+  - 接全域：`~/.claude/CLAUDE.md` import 本 repo `_global/rules.md`，從此任何專案的 Claude Code 都吃到全域規則（本機 clone 在 `~/Desktop/gitlab/hsin-dev-notes`）。
+- **產出**：`CLAUDE.md`、`_global/rules.md`、`_global/session-log.md`、`_shared/tailwind.md`、`angular/stack.md`、`postgres/conventions.md`、`README.md`、`unity/stack.md`、`vue/stack.md`、`go/stack.md`
+- **後續**：godot 三檔（errors 372 / conventions 348 / plugins 337）破 200 行待濃縮、`plugins.md` 的 DFS 職涯排程宜移到該專案 repo、spectra 指令命名（colon vs dash）待拍板、3 份 `errors.md` 模板可收斂單一來源、3 個空 `errors.md` 滿半年（約 2026-10）再撤
+
 ### 2026-05-07｜em 醫美管理系統架構盤點 + dev-notes 第一筆 nginx HMR 踩坑與 postgres stack 起跳
 - **專案**：em（醫美管理系統，Next.js 16 + Prisma 7 + PostgreSQL）→ 同步落地到 dev-notes
 - **重點**：

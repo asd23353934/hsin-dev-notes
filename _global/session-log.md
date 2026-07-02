@@ -17,6 +17,16 @@
 
 ---
 
+### 2026-07-02｜skill_tracker v4.9.4 標槍改名 + 倒數小窗按鍵底 + 音效三選一模式
+- **專案**：skill_tracker（Artale 楓之谷技能冷卻追蹤，PySide6 + PyInstaller）
+- **重點**：
+  - 三項 UI 需求：**毒流星→標槍**改名（只改 `name`，`id`/`icon` 不動避免破壞既有 profile 快捷鍵/override 綁定；預設 TTS 自動念新名）；**倒數小窗按鍵字幕加底**（幾經調整：半透明淡灰膠囊 → 不透明深黑灰方正小圓角 `V2Theme.BG_ELEVATED`，與圖片留 3px 間距、寬度與小窗一致）；**技能音效選單**從「下拉塞滿 `tts_*.wav`」改為三選一模式（念名稱 / 選擇音效 / 靜音），下拉只在「選擇音效」時列實體音檔。
+  - 保留原**三態 override 契約**（清 override→念名稱預設 TTS、檔名→指定音效、`__mute__`→靜音），只換 UI 呈現不動 domain/services 與 DATA_FORMAT。
+  - `/simplify` 4-agent 審查落地：radio QSS 收斂進 `V2Theme.radio_button_qss()`（比照 `primary_button_qss`/`combo_qss` 慣例）、移除死別名 `sound_combo`、`_apply_sound_state` 單次掃描；順帶抓到 changelog/註解與最終實作不符（半透明膠囊 vs 深黑灰方正）先修。`/security-review` 無漏洞（純本地 UI）。
+  - 打包照 **strip→build→restore→zip**：`strip_config_for_release` 只清 `config.json` 的 settings（保留 skills 含標槍 + monsters/overlays），restore 用 `config.json.dev_backup` 還原；`check_release` 紅字（skill_permanent 非空 / 預設配置含設定）是本機 dev 狀態，那些檔 gitignore、也不進 ZIP，不影響發佈物。
+- **產出**：commit `37fd463`；tag `v4.9.4`；GitHub release v4.9.4（含 `skill_tracker_v4.9.4.zip`，已設 Latest，updater 可偵測）。改檔：config.json / src/ui/skill_window.py / src/ui_v2/dialogs/skill_detail_dialog_v2.py / src/ui_v2/theme_v2.py / version.py。
+- **後續**：無待辦；音效模式日後若要與 monster_page 的音效下拉共用，可再抽共用 section 元件。
+
 ### 2026-06-29｜dev-notes 首次 reflective pass（§14）+ 接上全域
 - **專案**：hsin-dev-notes 本身
 - **重點**：

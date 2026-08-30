@@ -2,7 +2,7 @@
 
 > Python / Playwright / httpx / 爬蟲相關問題與解法。
 > 遇到錯誤先查這裡有沒有紀錄；解完新坑請補上。
-> 最後更新：2026-06-17
+> 最後更新：2026-08-31
 
 ---
 
@@ -75,3 +75,30 @@
 - **問題**：自動更新解壓 release ZIP 很慢（使用者按更新後重啟等很久）；bundle 是 onedir（`_internal` 含數百個 DLL 小檔）。
 - **原因**：PS 5.1 的 `Expand-Archive` 把每個 entry 走 PowerShell 物件 pipeline，對「大量小檔」效能極差。
 - **解法**：改用 .NET 直接解壓——`Add-Type -AssemblyName System.IO.Compression.FileSystem`、`[IO.Compression.ZipFile]::OpenRead($zip)` 後逐 entry `[IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $target, $true)`（第 3 參數 `$true`=覆寫，等同 `-Force`）。實測 448 檔 5.5s→1.7s（~3.2x；慢碟 / 防毒重的機器差更多）。**務必加 zip-slip 防護**：`$target` 用 `[IO.Path]::GetFullPath` 解析後須仍以解壓根目錄（含尾端分隔符）為字首，否則惡意 `../` entry 會寫出目錄外。保險：包在 `try` 裡，失敗就 fallback 回 `Expand-Archive`（行為不退步）。
+
+### Claude Code Bash tool 不能用 PowerShell here-string（`@'...'@`）
+- **適用版本**：Claude Code（Bash tool = Git Bash / POSIX sh）；與 Python 版本無關
+- **日期**：2026-07-05
+- **環境**：Windows 11 + Claude Code Bash tool
+- **問題**：在 Bash tool 裡用 `git commit -m @'...多行...'@` 下 commit，訊息開頭混入字面 `@`，且多行結構跑掉（subject 變成 `@`）。
+- **原因**：`@'...'@` 是 **PowerShell** here-string 語法。Bash tool 底層是 POSIX sh，會把 `@'` 拆成字面 `@` ＋ 單引號字串起頭，`'@` 同理，於是 `@` 被當成訊息內容。兩個工具的引號語法完全不通用。
+- **解法**：Bash tool 的多行字串一律用 heredoc —— `git commit -F - <<'EOF' … EOF`（單引號 EOF 讓 `$` 與反引號原樣保留），或先 `cat > /tmp/cm.txt <<'EOF' … EOF` 再 `git commit -F /tmp/cm.txt`。`@'...'@` 只在 PowerShell tool 用，且結尾 `'@` 必須頂格獨立一行。已誤 commit 時 `git commit --amend -F <檔>` 修正。
+- **重點**：**動手前先確認自己在哪個 shell**（Bash tool = sh，PowerShell tool = PowerShell），多行 / 含特殊字元的字串兩邊語法互不相容。
+
+### 用已被更新的狀態去比對「前後是否改變」→ 判斷恆為否，分支永遠不執行
+- **適用版本**：與語言無關（Python / TS 都會踩）；本次在 Python 3.13 + PySide6 遇到
+- **日期**：2026-08-31
+- **環境**：Python 3.13 / PySide6 6.7（skill_tracker，domain service 與 UI 層分離）
+- **問題**：批次切換（「全部常駐」）明明有改到狀態，UI 端該建立 / 該收掉的浮動視窗卻完全沒動作，也不噴任何錯誤；單一項目切換看起來卻是正常的，因此一直沒被發現。
+- **原因**：UI 端 helper 寫成 `was = self.state.get(sid, False)` 再比 `if is_on and not was` / `elif not is_on and was`。但 `self.state` 是 property 直接回傳 service 內部 dict 的**共享參考**，而呼叫端進來之前已經先呼叫 service 改過狀態 → `was` 永遠等於 `is_on`，兩個分支都進不去。單項路徑「看起來正常」是因為它另外還有一段自己的建立邏輯蓋過去，把 bug 遮住了。
+- **解法**：不要在狀態已經寫入之後才去比對前後差異。二選一：(1) 呼叫端在改狀態**之前**先把舊值抓下來傳進去；(2) 不看差異，只依**當下的目標狀態**做冪等（idempotent）收斂 —— 本次採這個：`want = perm.get(sid) or loop.get(sid)`，`want and sid not in windows` 就建、`not want and sid in windows` 就關。順帶讓「兩個互斥旗標其一為開就保留視窗」這種規則變得直觀。
+- **重點**：只要 state 是**共享參考**（property 直接回傳內部 dict / list），「比對前後差異」就很脆弱 —— 呼叫順序一改就默默失效且不報錯。**冪等收斂比差異偵測穩**。發現「單項正常、批次無效」時優先懷疑這個。
+
+### Claude Code computer-use 截圖會把「不在授權清單」的執行檔遮成空白
+- **適用版本**：Claude Code computer-use MCP（`request_access` 回傳 `screenshotFiltering: "mask"` 時）
+- **日期**：2026-08-31
+- **環境**：Windows 11 + Claude Code computer-use；授權清單裡只有 `python.exe`
+- **問題**：驗證 PyInstaller 打包出來的 exe，截圖裡視窗是一片空白深色矩形，一度判定「打包壞了 / UI 沒渲染」。同一份程式碼用 `python main.py` 跑卻完全正常。
+- **原因**：`request_access` 是**依執行檔**授權的。dev 模式的宿主是 `python.exe`（已授權），打包後變成 `skill_tracker.exe`（不在清單）→ 截圖把它的內容遮掉。程式本身沒問題。
+- **解法**：用 `user32.PrintWindow(hwnd, memdc, 2)`（`PW_RENDERFULLCONTENT`）自己抓視窗內容繞過遮罩，與 z-order / 是否最小化無關 —— 本專案是 Qt/GDI 視窗所以抓得到（Chromium / Electron 系被遮擋時會回空白，見上面〈PrintWindow 對被遮擋的 GPU/Chromium 視窗回空白〉）。或把打包後的 exe 一併加進 `request_access`。
+- **重點**：**空白畫面先問「是不是被遮罩」，再問「是不是壞了」**；判斷依據是換一個宿主執行檔跑同一份程式，行為不同就是授權問題。另外別從外部程序戳 `ShowWindow` / `SetForegroundWindow` 想「救」視窗 —— Windows 多半會拒絕跨程序搶前景，只會把 `WS_MINIMIZE` / rect 弄成矛盾狀態，更難判讀。

@@ -17,6 +17,21 @@
 
 ---
 
+### 2026-08-31｜skill_tracker v4.12.0：小窗重置鈕 / 循環常駐顯示 / 前景切換重申置頂
+- **專案**：skill_tracker（Artale 楓之谷技能冷卻追蹤，PySide6 + PyInstaller）
+- **重點**：
+  - 四項需求：海盜新增「海鷗特戰隊」5s（Gaviota，圖示取自 maplesaga 技能庫的 32×32 PNG，規格與現有技能圖一致）、技能小窗加重置鈕（tooltip 只有「重置」/「關閉」兩字）、循環改成與常駐一樣常駐顯示、切視窗後小窗不再被壓到底層
+  - **既有 bug（可遷移教訓）**：批次「全部常駐」不會建立也不會收掉小窗 —— helper 拿**已經被更新過的** state 去比對「前後是否改變」，判斷恆為否。改成不看差異、只依當下目標狀態做冪等收斂。已寫入 `python/errors.md`
+  - **置頂方案取捨**：`WS_EX_TOPMOST` 只保證壓過非置頂視窗，同樣置頂的視窗一旦後取得前景就會排到前面。否決 `SetWinEventHook`（要顧 WinEventProc 的 GC 生命週期 ＋ UnhookWinEvent，維護成本換不到什麼）；否決掛在既有 `_tick`（待機中的常駐 / 循環小窗根本沒有 timer 在跑，而那正是最常被蓋住的一群）。最後用 500ms QTimer 只比對 `GetForegroundWindow()`，**前景真的換了**才重申 z-order，沒有小窗時連前景都不查。實測閒置 20 秒 CPU 時間增加 0 秒（低於 Windows 計時解析度）。獨佔全螢幕仍蓋不上去，那是 DWM 之外的路徑
+  - **假故障**：打包後的 exe 在 computer-use 截圖裡是一片空白 —— 是截圖依執行檔遮罩造成的（清單只有 `python.exe`），不是打包壞掉。改用 `PrintWindow` 才看到完整畫面。已寫入 `python/errors.md`
+  - 發布：`python release.py` 一條龍過關，ZIP 76.6 MB / 735 檔。驗過 `config.json` 有還原（diff 只剩新技能那 8 行、無 stripped 標記）、ZIP 內無使用者資料、exe 實跑顯示 v4.12.0
+- **產出**：
+  - `skill_tracker`（commit `4548734` / tag `v4.12.0`）：config.json、`images/海盜-海鷗特戰隊.png`、skill_window.py、window_manager.py、app_core.py、window_enum.py、window_topmost.py、skill_detail_dialog_v2.py、main_v2.py、version.py、`tests/test_window_manager_topmost.py`、`verify_skill_reset_button.py`、verify_skill_window_topmost.py
+  - `hsin-dev-notes`：`python/errors.md`（3 筆，含補回一筆先前寫好但未提交的 here-string 紀錄）、本 session-log
+- **後續**：
+  - `src/ui/overlay_window.py` 的浮動圖片視窗有一模一樣的置頂問題（從頭到尾沒重申過 topmost），本次未動
+  - release ZIP 的 `overlays` 帶著個人截圖 `Snipaste_2026-03-17_11-09-58` 當「ship 預設內容」（`strip_config_for_release.py` 刻意只重設 settings），要不要繼續出貨待確認
+
 ### 2026-07-02｜skill_tracker v4.9.4 標槍改名 + 倒數小窗按鍵底 + 音效三選一模式
 - **專案**：skill_tracker（Artale 楓之谷技能冷卻追蹤，PySide6 + PyInstaller）
 - **重點**：

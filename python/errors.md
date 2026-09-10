@@ -2,7 +2,7 @@
 
 > Python / Playwright / httpx / 爬蟲相關問題與解法。
 > 遇到錯誤先查這裡有沒有紀錄；解完新坑請補上。
-> 最後更新：2026-08-31
+> 最後更新：2026-09-10
 
 ---
 
@@ -102,3 +102,14 @@
 - **原因**：`request_access` 是**依執行檔**授權的。dev 模式的宿主是 `python.exe`（已授權），打包後變成 `skill_tracker.exe`（不在清單）→ 截圖把它的內容遮掉。程式本身沒問題。
 - **解法**：用 `user32.PrintWindow(hwnd, memdc, 2)`（`PW_RENDERFULLCONTENT`）自己抓視窗內容繞過遮罩，與 z-order / 是否最小化無關 —— 本專案是 Qt/GDI 視窗所以抓得到（Chromium / Electron 系被遮擋時會回空白，見上面〈PrintWindow 對被遮擋的 GPU/Chromium 視窗回空白〉）。或把打包後的 exe 一併加進 `request_access`。
 - **重點**：**空白畫面先問「是不是被遮罩」，再問「是不是壞了」**；判斷依據是換一個宿主執行檔跑同一份程式，行為不同就是授權問題。另外別從外部程序戳 `ShowWindow` / `SetForegroundWindow` 想「救」視窗 —— Windows 多半會拒絕跨程序搶前景，只會把 `WS_MINIMIZE` / rect 弄成矛盾狀態，更難判讀。
+
+### 自繪 frameless 小窗拖到不同 DPI 縮放的螢幕會破版（尺寸縮水被裁切）
+- **適用版本**：PySide6 / PyQt（Qt 5 / 6）on Windows，多螢幕不同縮放比例；視窗為 frameless + 自己 `move()` 拖曳（非系統原生拖曳）
+- **日期**：2026-09-10
+- **環境**：Python 3.13.7 / PySide6 6.10.2 / Qt 6.10.2 / Windows 10（雙螢幕，以 `QT_SCREEN_SCALE_FACTORS` 模擬 100% + 150%）
+- **問題**：自繪的無框浮動小窗（`paintEvent` 以固定的畫布尺寸作畫）拖過螢幕邊界、進到縮放比例不同的螢幕後「破版」——畫面右側／下方被切掉，按鈕的判定矩形也掉出可點範圍。留在同一台螢幕內拖曳完全正常。
+- **原因**：拖曳是自己 `move()` 搬視窗。跨螢幕時 Windows 送 WM_DPICHANGED，Qt 對「由 `setGeometry` 引發的 DPI 變化」不會套用系統建議的新矩形 → 視窗保留舊的**實體**像素大小，換算回邏輯像素就縮水了。`paintEvent` 仍以原本的畫布尺寸作畫，超出的部分被 backing store 裁掉；hit rect 也跟著失準。
+- **解法**：兩段。(1) 用 `setFixedSize()` 宣告尺寸（而非單純 `resize()`），讓 Qt 與平台層都把它當唯一合法大小。(2) 加尺寸自癒 `_enforce_canvas_size()`：現值 != 期望值就改回去，掛在 `resizeEvent` / `moveEvent` / `QEvent.Type.DevicePixelRatioChange` / `QEvent.Type.ScreenChangeInternal` 四個點（跨螢幕時前兩個 DPR/螢幕事件早於 `moveEvent` 送達，是最早能反應的時機）。相等就 return，正常拖曳每個 mousemove 都會走到、不能有多餘動作。改回去會再進 `resizeEvent` 一次，那次比對相等直接返回，不會遞迴。class 層給 `_canvas_width = 0` 之類的安全預設 —— 建構期就可能有事件進 `event()`，那時尺寸還沒算出來。
+- **關鍵細節（實測）**：**自癒一定要用 `resize()`，不能用 `setFixedSize()`**。`setFixedSize(w, h)` 的 early-return 只看目前的 min/max 是否已等於 `w`/`h`，**不看實際的 crect**；DPI 切換時 Qt 的尺寸約束原封不動、只有 crect 被平台改掉 → min == max == 畫布尺寸，`setFixedSize` 判定「沒變動」整個跳過，救不回來。`resize()` 則會實際重跑幾何流程（且被固定尺寸夾回同一個值）。
+- **重現法**：`widget.windowHandle().resize(w, h)` —— QWindow 那層繞過 QWidget 的 min/max 約束，能造出「crect 縮水但 min/max 不變」的真實狀態。**別用「先 `setMinimumSize(0,0)` / `setMaximumSize(MAX,MAX)` 再 `resize()` 縮小」來測**：那會把約束一起改掉，`setFixedSize` 在該狀態下反而救得回來，測不出上面那條差別（也別在解約束後想「還原 min/max」——`setMinimumSize` 本身就會把 widget 撐回去，狀態直接沒了）。
+- **可縮放視窗的變形**：若小窗支援使用者改大小，期望尺寸是會變的那組值（如 `img_w`/`img_h`）。改尺寸的函式要**先更新期望值、再改視窗**，否則 `setFixedSize` 同步觸發的 `resizeEvent` → 自癒會拿舊期望值比對，把使用者剛改的尺寸當成「被平台改壞」立刻改回去。

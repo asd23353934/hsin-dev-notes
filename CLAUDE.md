@@ -25,7 +25,7 @@ dev-notes/
 │   ├── skill.md        ← Claude Code 工具/skill/subagent 使用規範
 │   └── session-log.md  ← 對話日誌
 │
-├── _shared/            ← 跨技術棧共用（typescript / tailwind / spectra）
+├── _shared/            ← 跨技術棧共用（typescript / tailwind / spectra / agent-dev-acceptance / desktop-app-update）
 │
 ├── angular/            ← Angular（stack / conventions / errors）
 ├── nextjs/             ← Next.js（App Router）
@@ -47,7 +47,7 @@ dev-notes/
 必讀 `_global/rules.md`（最高優先行為規則）。其餘**依當下主題按需讀取，不必每次全讀**：
 
 - Angular → `angular/`;Next.js → `nextjs/`;Python → `python/`;Electron → `electron/`;PostgreSQL → `postgres/`;Godot → `godot/`;Unity/C# → `unity/`;Vue/Nuxt → `vue/`;Go → `go/`（各取 `conventions.md` + `stack.md`）
-- TypeScript → `_shared/typescript.md`;Tailwind → `_shared/tailwind.md`;專案根有 `openspec/` → `_shared/spectra.md`
+- TypeScript → `_shared/typescript.md`;Tailwind → `_shared/tailwind.md`;專案根有 `openspec/` → `_shared/spectra.md`;專案由 AI 代理鏈接單實作、我方負責審單／驗收 → `_shared/agent-dev-acceptance.md`
 - 遇錯先查 `[framework]/errors.md`
 - 涉及 Claude Code 工具 / skill / subagent / slash command 行為 → `_global/skill.md`
 

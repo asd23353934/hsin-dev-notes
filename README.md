@@ -31,7 +31,9 @@ dev-notes/
 ├── _shared/              # 跨技術棧共用
 │   ├── typescript.md
 │   ├── tailwind.md
-│   └── spectra.md        # Spec-Driven Development 工具流程
+│   ├── spectra.md        # Spec-Driven Development 工具流程
+│   ├── agent-dev-acceptance.md  # AI 代理實作、人工驗收的判準
+│   └── desktop-app-update.md    # 桌面 app 自動更新踩坑
 │
 ├── angular/              # Angular 專屬
 │   ├── stack.md
